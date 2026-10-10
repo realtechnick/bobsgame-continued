@@ -303,7 +303,7 @@ void TEXTANSWER_answerbox(const char* TEXT_option_buffer,int TEXT_option_length)
 	else if(longest_answer_pixel_length>=64*2)TEXTANSWER_amt_of_chunks=3;
 
 	TEXTANSWER_amt_of_sprites=1*TEXTANSWER_amt_of_chunks;
-	TEXTANSWER_answerbox_y=192;
+	TEXTANSWER_answerbox_y=GAME_VIEWPORT_HEIGHT_PIXELS;//PORT: was hardcoded 192 (DS screen height); the answer box must start just below the visible viewport so the slide-up animation can run
 
 	TEXTANSWER_clear_answerbox();
 
