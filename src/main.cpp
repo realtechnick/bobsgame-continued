@@ -448,7 +448,7 @@ fprintf(stderr,"Display refresh %dHz, swap interval %d\n",display_refresh,swap_i
 		// 120Hz -> native interval 2, 60Hz -> native interval 1: both pace
 		// presents at exactly 16.67ms, so the 60Hz software gate below just
 		// stays satisfied with no phase drift possible.
-		extern int PORT_macos_set_native_swap_interval(int);
+		extern "C" int PORT_macos_set_native_swap_interval(int);
 		if(PORT_macos_set_native_swap_interval(swap_interval))
 		{
 			SDL_GL_SetSwapInterval(0);
