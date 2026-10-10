@@ -522,7 +522,7 @@ void GAME_vbl()
 		{
 			f++;
 			if(f>3)f=0;
-			create_needed_metatiles(f);//worker thread rasters in background;nice and smooth! a little bit of ghosting but thats ok :-)
+			create_needed_metatiles(f,4);//PORT: budget 4 metatiles per call so chunk streaming can't hitch a frame;nice and smooth! a little bit of ghosting but thats ok :-)
 		}
 
 

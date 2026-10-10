@@ -33,46 +33,6 @@ int metatile_x[4*METATILES_POSSIBLE]={0};
 int metatile_y[4*METATILES_POSSIBLE]={0};
 bool metatile_used[4*METATILES_POSSIBLE]={0};
 
-#define METATILE_WORK_QUEUE_SIZE 512
-
-typedef struct
-{
-	int bg_layer;
-	int flat_slot;
-	int clipx, clipy;
-	int map_width_pixels, map_height_pixels;
-	unsigned short* map;
-} MetatileWorkItem;
-
-typedef struct
-{
-	int flat_slot;
-	unsigned char* rgba;
-} MetatileDoneItem;
-
-static MetatileWorkItem metatile_work_queue[METATILE_WORK_QUEUE_SIZE];
-static int metatile_work_head=0;
-static int metatile_work_tail=0;
-static SDL_Mutex* metatile_work_mutex=NULL;
-static SDL_Condition* metatile_work_cond=NULL;
-
-static MetatileDoneItem metatile_done_queue[METATILE_WORK_QUEUE_SIZE];
-static int metatile_done_head=0;
-static int metatile_done_tail=0;
-static SDL_Mutex* metatile_done_mutex=NULL;
-
-static SDL_Thread* metatile_thread=NULL;
-static int metatile_thread_run=0;
-static bool metatile_queued[4*METATILES_POSSIBLE]={0};
-//PORT: worker thread functions (defined below)
-void metatile_worker_start();
-void metatile_worker_stop();
-void metatile_process_completions(int max_upload);
-unsigned char* HARDWARE_raster_metatile(int bg_layer,int MAP_width_pixels,int MAP_height_pixels,int clipx,int clipy,unsigned short* map);
-void HARDWARE_upload_metatile(int bg_layer,int metatile_index,unsigned char* MAP_rgba_data);
-
-
-
 bool metatile_map=1;
 
 unsigned short GAME_temp_TILESET_PALETTE[256]= {0};
@@ -134,11 +94,15 @@ void delete_all_metatiles()
 }
 
 //==========================================================================================================================
-void create_needed_metatiles(int bg)
+//PORT: max_create caps how many metatiles are built per call (0 = unlimited).
+//The per-frame streamer passes a small budget so a boundary crossing (a full
+//new row/column of 128px metatiles) spreads over several frames instead of
+//hitching one frame with raster + texture upload. The 64px preload margin
+//covers the deferral; the map-load path passes 0 for instant full creation.
+void create_needed_metatiles(int bg,int max_create)
 {//==========================================================================================================================
 
-	//PORT: upload any worker-finished rasters first (64KB each, cheap on render thread)
-	metatile_process_completions(8);
+	int created_this_call=0;
 
 	if(metatile_map==1)
 	{
@@ -176,63 +140,16 @@ void create_needed_metatiles(int bg)
 								make=0;
 							}
 						}
-					if(make==1)
-						for(s=0;s<METATILES_POSSIBLE;s++)
-							if(metatile_queued[bg*METATILES_POSSIBLE+s]==1)
-							{
-								if(metatile_x[bg*METATILES_POSSIBLE+s]==x&&metatile_y[bg*METATILES_POSSIBLE+s]==y)//already queued, don't duplicate.
-								{
-									make=0;
-								}
-							}
 					if(make==1)//it doesn't exist, so make it and draw it.
 					{
-							//fprintf(stdout,"creating metatile x:%d y:%d bg:%d\n",x/8,y/8,bg);
+						if(max_create>0&&created_this_call>=max_create)return;//PORT: budget spent, rest stream in over following frames
+						created_this_call++;
+						//fprintf(stdout,"creating metatile x:%d y:%d bg:%d\n",x/8,y/8,bg);
 
-						//PORT: worker thread rasters in background; render thread only uploads.
-						//If worker isn't running (map load), fall back to synchronous.
-						if(metatile_thread!=NULL)
-						{
-							int fslot=-1;
-							int fs=0;
-							for(fs=0;fs<METATILES_POSSIBLE;fs++)
-								if(metatile_used[bg*METATILES_POSSIBLE+fs]==0&&metatile_queued[bg*METATILES_POSSIBLE+fs]==0){fslot=fs;break;}
-							if(fslot>=0)
-							{
-								int flat=bg*METATILES_POSSIBLE+fslot;
-								metatile_x[flat]=x;
-								metatile_y[flat]=y;
-								metatile_queued[flat]=1;
-								unsigned short* wmap=NULL;
-								if(bg==0)wmap=HARDWARE_map_0;
-								if(bg==1)wmap=HARDWARE_map_1;
-								if(bg==2)wmap=HARDWARE_map_2;
-								if(bg==3)wmap=HARDWARE_map_3;
-								//enqueue (mutex+signal, microseconds on render thread)
-								SDL_LockMutex(metatile_work_mutex);
-								int wnext=(metatile_work_head+1)%METATILE_WORK_QUEUE_SIZE;
-								if(wnext!=metatile_work_tail)
-								{
-									metatile_work_queue[metatile_work_head].bg_layer=bg;
-									metatile_work_queue[metatile_work_head].flat_slot=flat;
-									metatile_work_queue[metatile_work_head].clipx=x;
-									metatile_work_queue[metatile_work_head].clipy=y;
-									metatile_work_queue[metatile_work_head].map_width_pixels=HARDWARE_map_width_tiles*8;
-									metatile_work_queue[metatile_work_head].map_height_pixels=HARDWARE_map_height_tiles*8;
-									metatile_work_queue[metatile_work_head].map=wmap;
-									metatile_work_head=wnext;
-									SDL_SignalCondition(metatile_work_cond);
-								}
-								SDL_UnlockMutex(metatile_work_mutex);
-							}
-						}
-						else
-						{
-							if(bg==3)HARDWARE_load_metatile(3, HARDWARE_map_width_tiles*8, HARDWARE_map_height_tiles*8, x , y, HARDWARE_map_3_filename);
-							if(bg==0)HARDWARE_load_metatile(0, HARDWARE_map_width_tiles*8, HARDWARE_map_height_tiles*8, x , y, HARDWARE_map_0_filename);
-							if(bg==2)HARDWARE_load_metatile(2, HARDWARE_map_width_tiles*8, HARDWARE_map_height_tiles*8, x , y, HARDWARE_map_2_filename);
-							if(bg==1)HARDWARE_load_metatile(1, HARDWARE_map_width_tiles*8, HARDWARE_map_height_tiles*8, x , y, HARDWARE_map_1_filename);
-						}
+						if(bg==3)HARDWARE_load_metatile(3, HARDWARE_map_width_tiles*8, HARDWARE_map_height_tiles*8, x , y, HARDWARE_map_3_filename);
+						if(bg==0)HARDWARE_load_metatile(0, HARDWARE_map_width_tiles*8, HARDWARE_map_height_tiles*8, x , y, HARDWARE_map_0_filename);
+						if(bg==2)HARDWARE_load_metatile(2, HARDWARE_map_width_tiles*8, HARDWARE_map_height_tiles*8, x , y, HARDWARE_map_2_filename);
+						if(bg==1)HARDWARE_load_metatile(1, HARDWARE_map_width_tiles*8, HARDWARE_map_height_tiles*8, x , y, HARDWARE_map_1_filename);
 						//gl_draw(GLTex_map_metatile[((3*METATILES_POSSIBLE)+s)], metatile_x[3*METATILES_POSSIBLE+s]-MAP_cam_x, metatile_y[3*METATILES_POSSIBLE+s]-MAP_cam_y,METATILE_SIZE,METATILE_SIZE);
 						//for some reason openGL blits the texture white for a frame. i guess there's a lag somewhere, so we just wait a frame to draw it.
 					}
@@ -314,9 +231,6 @@ void HARDWARE_delete_AUX_bg( int bg_layer)//HARDWARE_DeleteBg
 void HARDWARE_delete_all_bg_data()//HARDWARE_ResetBgSys
 {//==========================================================================================================================
 
-	//PORT: stop the raster worker before freeing map data it might be reading.
-	metatile_worker_stop();
-
 
 	if(metatile_map)
 	{
@@ -371,9 +285,7 @@ void HARDWARE_reload_bg_textures()
 
 		int c=0;
 		for(c=0;c<4;c++)
-		create_needed_metatiles(c);
-		//PORT: initial metatiles are rastered synchronously above; start the worker for streaming.
-		metatile_worker_start();
+		create_needed_metatiles(c,0);
 	}
 
 }
@@ -785,16 +697,37 @@ void HARDWARE_load_tileset_to_textures(int screen, int bg_layer, int* tileset_da
 
 
 //==========================================================================================================================
-//==========================================================================================================================
-unsigned char* HARDWARE_raster_metatile(int bg_layer, int MAP_width_pixels, int MAP_height_pixels, int clipx, int clipy, unsigned short* map)
-//==========================================================================================================================
-//PORT: extracted from HARDWARE_load_metatile. Pure CPU raster of one metatile to a RGBA buffer.
-//Thread-safe: reads only map/tileset/palette, never written during gameplay. Runs on the worker;
-//caller frees the returned buffer after GL upload.
-{
+void HARDWARE_load_metatile(int bg_layer, int MAP_width_pixels, int MAP_height_pixels, int clipx, int clipy, char* name)//HARDWARE_LoadBgMap
+{//==========================================================================================================================
+
+	//find an unused metatile slot
+	int s=0;
+	int metatile_index=0;
+
+
+	for(s=0;s<METATILES_POSSIBLE;s++)
+	if(metatile_used[bg_layer*METATILES_POSSIBLE+s]==0){metatile_index=s;s=METATILES_POSSIBLE;break;}
+
+	metatile_x[bg_layer*METATILES_POSSIBLE+metatile_index]=clipx;
+	metatile_y[bg_layer*METATILES_POSSIBLE+metatile_index]=clipy;
+	metatile_used[bg_layer*METATILES_POSSIBLE+metatile_index]=1;
+
+
+	//need to load only from x,y to metatile size
+	//so make a new map array screen width and height
+	//open the file, figure out location for each width starting at x y
+	//fill the new array with each width
+	//load that into a texture
+
+	//calloc mallocs and inits
 	unsigned short* clipmap = (unsigned short*)calloc(METATILE_SIZE/8 * METATILE_SIZE/8, sizeof(unsigned short));
 
+	unsigned short* map = NULL;
 
+	if(bg_layer==0)map=HARDWARE_map_0;
+	if(bg_layer==1)map=HARDWARE_map_1;
+	if(bg_layer==2)map=HARDWARE_map_2;
+	if(bg_layer==3)map=HARDWARE_map_3;
 
 	//if the clipped region isn't even on the map, don't bother opening any file.
 	//just keep it blank.
@@ -963,141 +896,23 @@ unsigned char* HARDWARE_raster_metatile(int bg_layer, int MAP_width_pixels, int 
 	}
 
 	if(clipmap!=NULL){free(clipmap);clipmap=NULL;}
-	return MAP_rgba_data;
-}
 
+	int w=texture_width;//surface->w;
+	int h=texture_height;//surface->h;
+	int* g=(int*)MAP_rgba_data;//surface->pixels;
 
-//==========================================================================================================================
-void HARDWARE_upload_metatile(int bg_layer, int metatile_index, unsigned char* MAP_rgba_data)
-//==========================================================================================================================
-//PORT: GL upload half of metatile creation. Must run on the render thread.
-{
-	int w=METATILE_SIZE;
-	int h=METATILE_SIZE;
-	int* g=(int*)MAP_rgba_data;
-	glGenTextures(1, &GLTex_map_metatile[bg_layer*METATILES_POSSIBLE+metatile_index]);
-	glBindTexture(GL_TEXTURE_2D, GLTex_map_metatile[bg_layer*METATILES_POSSIBLE+metatile_index]);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_BGRA, GL_UNSIGNED_BYTE, g);
+	{
+		glGenTextures(1, &GLTex_map_metatile[bg_layer*METATILES_POSSIBLE+metatile_index]);
+		glBindTexture(GL_TEXTURE_2D, GLTex_map_metatile[bg_layer*METATILES_POSSIBLE+metatile_index]);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_BGRA, GL_UNSIGNED_BYTE, g);
+	}
+
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
-}
 
+	//glFinish();
 
-//==========================================================================================================================
-void HARDWARE_load_metatile(int bg_layer, int MAP_width_pixels, int MAP_height_pixels, int clipx, int clipy, char* name)//HARDWARE_LoadBgMap
-//==========================================================================================================================
-//PORT: synchronous wrapper, used at map load. Streaming uses the worker thread.
-{
-
-	//find an unused metatile slot
-	int s=0;
-	int metatile_index=0;
-
-
-	for(s=0;s<METATILES_POSSIBLE;s++)
-	if(metatile_used[bg_layer*METATILES_POSSIBLE+s]==0){metatile_index=s;s=METATILES_POSSIBLE;break;}
-
-	metatile_x[bg_layer*METATILES_POSSIBLE+metatile_index]=clipx;
-	metatile_y[bg_layer*METATILES_POSSIBLE+metatile_index]=clipy;
-	metatile_used[bg_layer*METATILES_POSSIBLE+metatile_index]=1;
-
-	unsigned short* map = NULL;
-
-	if(bg_layer==0)map=HARDWARE_map_0;
-	if(bg_layer==1)map=HARDWARE_map_1;
-	if(bg_layer==2)map=HARDWARE_map_2;
-	if(bg_layer==3)map=HARDWARE_map_3;
-
-	unsigned char* rgba = HARDWARE_raster_metatile(bg_layer, MAP_width_pixels, MAP_height_pixels, clipx, clipy, map);
-	HARDWARE_upload_metatile(bg_layer, metatile_index, rgba);
-	if(rgba!=NULL){free(rgba);rgba=NULL;}
+	if(MAP_rgba_data!=NULL){free(MAP_rgba_data);MAP_rgba_data=NULL;}
 
 }
 
-
-//==========================================================================================================================
-//PORT: background metatile raster worker. The 16k-pixel CPU raster per metatile ran on the
-//render thread, hitching frames at chunk boundaries. A worker thread now rasters to RAM;
-//the render thread only does the 64KB texture upload, so chunk loading can't spike frame time.
-//==========================================================================================================================
-
-
-
-static int metatile_worker_fn(void* data)
-{
-	while(metatile_thread_run)
-	{
-		SDL_LockMutex(metatile_work_mutex);
-		while(metatile_work_head==metatile_work_tail&&metatile_thread_run)
-			SDL_WaitCondition(metatile_work_cond,metatile_work_mutex);
-		if(metatile_thread_run==0){SDL_UnlockMutex(metatile_work_mutex);break;}
-		MetatileWorkItem work=metatile_work_queue[metatile_work_tail];
-		metatile_work_tail=(metatile_work_tail+1)%METATILE_WORK_QUEUE_SIZE;
-		SDL_UnlockMutex(metatile_work_mutex);
-		unsigned char* rgba=HARDWARE_raster_metatile(work.bg_layer,work.map_width_pixels,work.map_height_pixels,work.clipx,work.clipy,work.map);
-		SDL_LockMutex(metatile_done_mutex);
-		int next=(metatile_done_head+1)%METATILE_WORK_QUEUE_SIZE;
-		if(next!=metatile_done_tail)
-		{
-			metatile_done_queue[metatile_done_head].flat_slot=work.flat_slot;
-			metatile_done_queue[metatile_done_head].rgba=rgba;
-			metatile_done_head=next;
-		}
-		else free(rgba);
-		SDL_UnlockMutex(metatile_done_mutex);
-	}
-	return 0;
-}
-
-void metatile_worker_start()
-{
-	if(metatile_thread!=NULL)return;
-	if(metatile_work_mutex==NULL)metatile_work_mutex=SDL_CreateMutex();
-	if(metatile_work_cond==NULL)metatile_work_cond=SDL_CreateCondition();
-	if(metatile_done_mutex==NULL)metatile_done_mutex=SDL_CreateMutex();
-	metatile_work_head=metatile_work_tail=0;
-	metatile_done_head=metatile_done_tail=0;
-	metatile_thread_run=1;
-	metatile_thread=SDL_CreateThread(metatile_worker_fn,"metatile",NULL);
-}
-
-void metatile_worker_stop()
-{
-	if(metatile_thread==NULL)return;
-	SDL_LockMutex(metatile_work_mutex);
-	metatile_thread_run=0;
-	SDL_SignalCondition(metatile_work_cond);
-	SDL_UnlockMutex(metatile_work_mutex);
-	SDL_WaitThread(metatile_thread,NULL);
-	metatile_thread=NULL;
-	metatile_work_head=metatile_work_tail=0;
-	SDL_LockMutex(metatile_done_mutex);
-	while(metatile_done_head!=metatile_done_tail)
-	{
-		free(metatile_done_queue[metatile_done_tail].rgba);
-		metatile_done_tail=(metatile_done_tail+1)%METATILE_WORK_QUEUE_SIZE;
-	}
-	SDL_UnlockMutex(metatile_done_mutex);
-	int i=0;
-	for(i=0;i<4*METATILES_POSSIBLE;i++)metatile_queued[i]=0;
-}
-
-void metatile_process_completions(int max_upload)
-{
-	int n=0;
-	while(n<max_upload)
-	{
-		SDL_LockMutex(metatile_done_mutex);
-		if(metatile_done_head==metatile_done_tail){SDL_UnlockMutex(metatile_done_mutex);break;}
-		MetatileDoneItem done=metatile_done_queue[metatile_done_tail];
-		metatile_done_tail=(metatile_done_tail+1)%METATILE_WORK_QUEUE_SIZE;
-		SDL_UnlockMutex(metatile_done_mutex);
-		int bg=done.flat_slot/METATILES_POSSIBLE;
-		int s=done.flat_slot%METATILES_POSSIBLE;
-		HARDWARE_upload_metatile(bg,s,done.rgba);
-		free(done.rgba);
-		metatile_used[done.flat_slot]=1;
-		metatile_queued[done.flat_slot]=0;
-		n++;
-	}
-}
