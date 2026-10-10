@@ -425,9 +425,9 @@ int main(int argc, char *argv[])//int argc, char **argv)
 //no drift is possible. The software 60Hz gate below then just stays satisfied.
 int display_refresh=60;
 {
-	SDL_DisplayMode dm;
-	//SDL3: query the desktop mode for the window's display (refresh_rate is float in SDL3)
-	if(SDL_GetDesktopDisplayMode(SDL_GetDisplayForWindow(window),&dm)&&dm.refresh_rate>0)display_refresh=(int)(dm.refresh_rate+0.5f);
+	//SDL3: SDL_GetDesktopDisplayMode returns const SDL_DisplayMode* (refresh_rate is float)
+	const SDL_DisplayMode* dm=SDL_GetDesktopDisplayMode(SDL_GetDisplayForWindow(window));
+	if(dm!=NULL&&dm->refresh_rate>0)display_refresh=(int)(dm->refresh_rate+0.5f);
 }
 int swap_interval=display_refresh/60;
 if(swap_interval<1)swap_interval=1;
