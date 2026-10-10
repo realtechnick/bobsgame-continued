@@ -53,13 +53,13 @@ typedef struct
 static MetatileWorkItem metatile_work_queue[METATILE_WORK_QUEUE_SIZE];
 static int metatile_work_head=0;
 static int metatile_work_tail=0;
-static SDL_mutex* metatile_work_mutex=NULL;
-static SDL_cond* metatile_work_cond=NULL;
+static SDL_Mutex* metatile_work_mutex=NULL;
+static SDL_Condition* metatile_work_cond=NULL;
 
 static MetatileDoneItem metatile_done_queue[METATILE_WORK_QUEUE_SIZE];
 static int metatile_done_head=0;
 static int metatile_done_tail=0;
-static SDL_mutex* metatile_done_mutex=NULL;
+static SDL_Mutex* metatile_done_mutex=NULL;
 
 static SDL_Thread* metatile_thread=NULL;
 static int metatile_thread_run=0;
@@ -221,7 +221,7 @@ void create_needed_metatiles(int bg)
 									metatile_work_queue[metatile_work_head].map_height_pixels=HARDWARE_map_height_tiles*8;
 									metatile_work_queue[metatile_work_head].map=wmap;
 									metatile_work_head=wnext;
-									SDL_CondSignal(metatile_work_cond);
+									SDL_SignalCondition(metatile_work_cond);
 								}
 								SDL_UnlockMutex(metatile_work_mutex);
 							}
@@ -794,7 +794,6 @@ unsigned char* HARDWARE_raster_metatile(int bg_layer, int MAP_width_pixels, int 
 {
 	unsigned short* clipmap = (unsigned short*)calloc(METATILE_SIZE/8 * METATILE_SIZE/8, sizeof(unsigned short));
 
-	unsigned short* map = NULL;
 
 
 	//if the clipped region isn't even on the map, don't bother opening any file.
@@ -1030,7 +1029,7 @@ static int metatile_worker_fn(void* data)
 	{
 		SDL_LockMutex(metatile_work_mutex);
 		while(metatile_work_head==metatile_work_tail&&metatile_thread_run)
-			SDL_CondWait(metatile_work_cond,metatile_work_mutex);
+			SDL_WaitCondition(metatile_work_cond,metatile_work_mutex);
 		if(metatile_thread_run==0){SDL_UnlockMutex(metatile_work_mutex);break;}
 		MetatileWorkItem work=metatile_work_queue[metatile_work_tail];
 		metatile_work_tail=(metatile_work_tail+1)%METATILE_WORK_QUEUE_SIZE;
@@ -1054,7 +1053,7 @@ void metatile_worker_start()
 {
 	if(metatile_thread!=NULL)return;
 	if(metatile_work_mutex==NULL)metatile_work_mutex=SDL_CreateMutex();
-	if(metatile_work_cond==NULL)metatile_work_cond=SDL_CreateCond();
+	if(metatile_work_cond==NULL)metatile_work_cond=SDL_CreateCondition();
 	if(metatile_done_mutex==NULL)metatile_done_mutex=SDL_CreateMutex();
 	metatile_work_head=metatile_work_tail=0;
 	metatile_done_head=metatile_done_tail=0;
@@ -1067,7 +1066,7 @@ void metatile_worker_stop()
 	if(metatile_thread==NULL)return;
 	SDL_LockMutex(metatile_work_mutex);
 	metatile_thread_run=0;
-	SDL_CondSignal(metatile_work_cond);
+	SDL_SignalCondition(metatile_work_cond);
 	SDL_UnlockMutex(metatile_work_mutex);
 	SDL_WaitThread(metatile_thread,NULL);
 	metatile_thread=NULL;
