@@ -63,20 +63,20 @@ void NPC_set_car_anim_frame_now(NPC** npcpp,int frame)
 
 		if(frame==LEFT	||	frame==RIGHT)
 		{
-			//PORT: sizes scaled 4/3 for 2.0f sprite scale (was 1.5f): 96->128.
-			npc->hitsize_x = 128;
-			npc->hitsize_y = 53;
-			npc->size_x = 128;
-			npc->size_y = 107;
+			//PORT: 1.0f sprite scale (integer, sharp). Was 96x80 at 1.5f.
+			npc->hitsize_x = 64;
+			npc->hitsize_y = 27;
+			npc->size_x = 64;
+			npc->size_y = 53;
 		}
 
 		if(frame==UP	||	frame==DOWN)
 		{
-			//PORT: sizes scaled 4/3 for 2.0f sprite scale (was 1.5f): 96->128.
-			npc->hitsize_x = 85;
-			npc->hitsize_y = 128;
-			npc->size_x = 85;
-			npc->size_y = 128;
+			//PORT: 1.0f sprite scale (integer, sharp). Was 64x96 at 1.5f.
+			npc->hitsize_x = 43;
+			npc->hitsize_y = 64;
+			npc->size_x = 43;
+			npc->size_y = 64;
 		}
 	}
 }
@@ -247,7 +247,7 @@ void NPC_create_car(NPC** npcpp,int x,int y,int direction)
 		NPC_set_car_anim_frame_now(npcpp,direction);
 		npc->non_walkable=1;
 		npc->animation_off=1;
-		npc->scale=2.0f; //PORT: was 1.5f (non-integer, forced bilinear); 2.0f is integer, nearest-neighbor, sharp.
+		npc->scale=1.0f; //PORT: was 1.5f (non-integer, forced bilinear); 1.0f is integer, nearest-neighbor, sharp.
 
 	}
 
@@ -380,7 +380,7 @@ bool NPC_car_xyxy(NPC** npcpp,int x,int y,int x2,int y2,int speed,int direction,
 		if(type==4)NPC_create_npc_xy_feet(npcpp,GFX_CAR_minivan,64,64,x,y);
 		npc->non_walkable=1;
 		npc->animation_off=1;
-		npc->scale=2.0f; //PORT: was 1.5f (non-integer, forced bilinear); 2.0f is integer, nearest-neighbor, sharp.
+		npc->scale=1.0f; //PORT: was 1.5f (non-integer, forced bilinear); 1.0f is integer, nearest-neighbor, sharp.
 		npc->randomcolorset[0]=r(13);
 		NPC_set_car_anim_frame_now(npcpp,direction);
 	}
@@ -430,7 +430,7 @@ bool NPC_car_counterclockwise(NPC** npcpp,int speed,int* hit_direction_x,int* hi
 
 		npc->non_walkable=1;
 		npc->animation_off=1;
-		npc->scale=2.0f; //PORT: was 1.5f (non-integer, forced bilinear); 2.0f is integer, nearest-neighbor, sharp.
+		npc->scale=1.0f; //PORT: was 1.5f (non-integer, forced bilinear); 1.0f is integer, nearest-neighbor, sharp.
 		npc->AI=0;
 		npc->walk_dir=0;
 		npc->randomcolorset[0]=r(13);
@@ -660,7 +660,7 @@ bool NPC_car_clockwise(NPC** npcpp,int speed,int* hit_direction_x,int* hit_direc
 		if(type==4)NPC_create_npc_xy_feet(npcpp,GFX_CAR_minivan,64,64,649*8,16*8);	//	car created (feet middle) at 649,16
 		npc->non_walkable=1;
 		npc->animation_off=1;
-		npc->scale=2.0f; //PORT: was 1.5f (non-integer, forced bilinear); 2.0f is integer, nearest-neighbor, sharp.
+		npc->scale=1.0f; //PORT: was 1.5f (non-integer, forced bilinear); 1.0f is integer, nearest-neighbor, sharp.
 		npc->AI=0;
 		npc->walk_dir=0;
 		npc->randomcolorset[0]=r(13);

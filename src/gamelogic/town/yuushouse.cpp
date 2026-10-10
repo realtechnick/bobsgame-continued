@@ -3893,7 +3893,7 @@ void bobsgame_TOWNYUUGarage_Map_Run_Function(int MAP_just_loaded)
 			NPC_set_car_anim_frame_now(&garagecar_npc,UP);
 			garagecar_npc->non_walkable=1;
 			garagecar_npc->animation_off=1;
-			garagecar_npc->scale=1.5f;
+			garagecar_npc->scale=1.0f; //PORT: was 1.5f (non-integer, forced bilinear).
 		}
 	}
 
@@ -3909,7 +3909,7 @@ void bobsgame_TOWNYUUGarage_Map_Run_Function(int MAP_just_loaded)
 			NPC_set_car_anim_frame_now(&garagetruck_npc,UP);
 			garagetruck_npc->non_walkable=1;
 			garagetruck_npc->animation_off=1;
-			garagetruck_npc->scale=1.5f;
+			garagetruck_npc->scale=1.0f; //PORT: was 1.5f (non-integer, forced bilinear).
 		}
 	}
 

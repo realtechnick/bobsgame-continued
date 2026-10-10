@@ -1370,11 +1370,11 @@ static NPC* pickupcar_npc=NULL;
 			NPC_set_car_anim_frame_now(&icecreamtruck_npc,2);
 			icecreamtruck_npc->non_walkable=1;
 			icecreamtruck_npc->animation_off=1;
-			icecreamtruck_npc->scale=1.5f;
-			icecreamtruck_npc->hitsize_x = 96;
-			icecreamtruck_npc->hitsize_y = 36;
-			icecreamtruck_npc->size_x = 96;
-			icecreamtruck_npc->size_y = 64;
+			icecreamtruck_npc->scale=1.0f; //PORT: was 1.5f (non-integer, forced bilinear).
+			icecreamtruck_npc->hitsize_x = 64;
+			icecreamtruck_npc->hitsize_y = 24;
+			icecreamtruck_npc->size_x = 64;
+			icecreamtruck_npc->size_y = 43;
 			icecreamtruck_npc->walking_speed=SPEED_NORMAL;
 			icecreamman_came_today=1;
 			//5:00 pm very slowly travels down road, playing music
@@ -1552,7 +1552,7 @@ static NPC* bigdog_npc = NULL;
 			NPC_set_car_anim_frame_now(&ambulancecar,LEFT);
 			ambulancecar->non_walkable=1;
 			ambulancecar->animation_off=1;
-			ambulancecar->scale=1.5f;
+			ambulancecar->scale=1.0f; //PORT: was 1.5f (non-integer, forced bilinear).
 		}
 	}
 	else

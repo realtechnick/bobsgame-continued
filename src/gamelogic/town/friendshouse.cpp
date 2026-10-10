@@ -472,7 +472,7 @@ void bobsgame_TOWNFRIENDGarage_Map_Run_Function(int MAP_just_loaded)
 		NPC_set_car_anim_frame_now(&bobsvan_npc,UP);
 		bobsvan_npc->non_walkable=1;
 		bobsvan_npc->animation_off=1;
-		bobsvan_npc->scale=1.5f;
+		bobsvan_npc->scale=1.0f; //PORT: was 1.5f (non-integer, forced bilinear).
 	}
 	if(bobsvan_npc!=NULL)
 	{
