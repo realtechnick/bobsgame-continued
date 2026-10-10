@@ -418,16 +418,29 @@ int main(int argc, char *argv[])//int argc, char **argv)
 
 		///todo: need to figure out how to force swap
 		///todo: figure out why uses 100% gpu wtf
+//PORT: pace presents at 60Hz via the vsync block itself. Game logic is
+//software-gated at 16.6ms but a 120Hz display vsyncs at 8.33ms; the 0.066ms
+//per-frame phase drift accumulated into a missed vsync (micro-stutter) every
+//couple seconds. Swap interval refresh/60 makes the swap the 60Hz timer, so
+//no drift is possible. The software 60Hz gate below then just stays satisfied.
+int display_refresh=60;
+{
+	SDL_DisplayMode dm;
+	if(SDL_GetWindowDisplayMode(window,&dm)==0&&dm.refresh_rate>0)display_refresh=dm.refresh_rate;
+}
+int swap_interval=display_refresh/60;
+if(swap_interval<1)swap_interval=1;
+fprintf(stderr,"Display refresh %dHz, swap interval %d\n",display_refresh,swap_interval);
 #ifdef _WIN32
 		if(WGL_EXT_swap_control)
 		{
-			wglSwapIntervalEXT(1);
+			wglSwapIntervalEXT(swap_interval);
 		}
 		else
 		{vsync=0;fprintf(stderr,"Vsync Failed.\n");}
 #else
 		// Linux/other: use SDL for vsync control
-		if(!SDL_GL_SetSwapInterval(1))
+		if(!SDL_GL_SetSwapInterval(swap_interval))
 		{vsync=0;fprintf(stderr,"Vsync Failed.\n");}
 #endif
 		ERROR_check_SDL_and_GL_errors("framebuffer");
