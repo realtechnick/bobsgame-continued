@@ -442,19 +442,9 @@ int main(int argc, char *argv[])//int argc, char **argv)
 //no drift is possible. The software 60Hz gate below then just stays satisfied.
 int display_refresh=60;
 {
-	//PORT: Measure actual vsync interval instead of trusting SDL_GetDesktopDisplayMode,
-	//which reports 60Hz on macOS ProMotion displays even when running at 120Hz.
-	//Do 6 swaps with interval 1 and measure; <12ms avg = 120Hz, else 60Hz.
-	//(SDL3: SDL_GL_SetSwapInterval signature checked against installed headers.)
-	SDL_GL_SetSwapInterval(1);
-	Uint64 freq=SDL_GetPerformanceFrequency();
-	Uint64 t0=SDL_GetPerformanceCounter();
-	for(int i=0;i<6;i++)SDL_GL_SwapWindow(window);
-	Uint64 t1=SDL_GetPerformanceCounter();
-	float avg_ms=((float)(t1-t0)/(float)freq)*1000.0f/6.0f;
-	if(avg_ms<12.0f)display_refresh=120;
-	else display_refresh=60;
-	fprintf(stderr,"Measured vsync avg %.2fms -> display %dHz\n",avg_ms,display_refresh);
+	//SDL3: SDL_GetDesktopDisplayMode returns const SDL_DisplayMode* (refresh_rate is float)
+	const SDL_DisplayMode* dm=SDL_GetDesktopDisplayMode(SDL_GetDisplayForWindow(window));
+	if(dm!=NULL&&dm->refresh_rate>0)display_refresh=(int)(dm->refresh_rate+0.5f);
 }
 int swap_interval=display_refresh/60;
 if(swap_interval<1)swap_interval=1;
