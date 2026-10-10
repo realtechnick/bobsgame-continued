@@ -66,7 +66,7 @@ void HARDWARE_reload_bg_textures();
 
 void HARDWARE_load_metatile(int bg_layer, int MAP_width_pixels, int MAP_height_pixels, int clipx, int clipy, char* name);
 void HARDWARE_load_map(int bg_layer, void* MAP_data, int width, int height);
-void create_needed_metatiles(int bg,int max_create);
+void create_needed_metatiles(int bg);
 void delete_all_metatiles();
 void delete_bg_metatiles(int bg);
 

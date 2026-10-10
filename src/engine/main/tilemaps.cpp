@@ -94,15 +94,8 @@ void delete_all_metatiles()
 }
 
 //==========================================================================================================================
-//PORT: max_create caps how many metatiles are built per call (0 = unlimited).
-//The per-frame streamer passes a small budget so a boundary crossing (a full
-//new row/column of 128px metatiles) spreads over several frames instead of
-//hitching one frame with raster + texture upload. The 64px preload margin
-//covers the deferral; the map-load path passes 0 for instant full creation.
-void create_needed_metatiles(int bg,int max_create)
+void create_needed_metatiles(int bg)
 {//==========================================================================================================================
-
-	int created_this_call=0;
 
 	if(metatile_map==1)
 	{
@@ -142,8 +135,6 @@ void create_needed_metatiles(int bg,int max_create)
 						}
 					if(make==1)//it doesn't exist, so make it and draw it.
 					{
-						if(max_create>0&&created_this_call>=max_create)return;//PORT: budget spent, rest stream in over following frames
-						created_this_call++;
 						//fprintf(stdout,"creating metatile x:%d y:%d bg:%d\n",x/8,y/8,bg);
 
 						if(bg==3)HARDWARE_load_metatile(3, HARDWARE_map_width_tiles*8, HARDWARE_map_height_tiles*8, x , y, HARDWARE_map_3_filename);
@@ -285,7 +276,7 @@ void HARDWARE_reload_bg_textures()
 
 		int c=0;
 		for(c=0;c<4;c++)
-		create_needed_metatiles(c,0);
+		create_needed_metatiles(c);
 	}
 
 }
