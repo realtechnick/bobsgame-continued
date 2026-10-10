@@ -205,6 +205,14 @@ void TEXTANSWER_move_answerbox()
 void TEXTANSWER_draw_answerbox_text(const char* answer_text)
 {//=========================================================================================================================
 
+	//PORT: reset per-answer drawing state. These globals carry over from the previous answer,
+	//so without a reset only the first answer draws (string_position is already past the end
+	//of shorter answers) and the 6th answer draws its tail ("wait!" from "I can't wait!").
+	TEXTANSWER_string_position=0;
+	TEXTANSWER_x_in_tile=0;
+	TEXTANSWER_tile=0;
+	TEXTANSWER_chunk=0;
+
 	TEXTANSWER_string_length=strlen((char*)answer_text);
 
 	while(TEXTANSWER_string_position<TEXTANSWER_string_length)
