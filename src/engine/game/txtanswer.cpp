@@ -7,7 +7,7 @@
 
 
 
-int TEXTANSWER_answerbox_indexed_gfx_data[64*32*3*2]= {0};
+unsigned char TEXTANSWER_answerbox_indexed_gfx_data[64*32*3*2]= {0};//PORT: was int; the texture loader reads this as bytes, and int strides quadrupled every pixel into vertical stripes
 
 char TEXTANSWER_string_1[MAX_ANSWER_LENGTH];
 char TEXTANSWER_string_2[MAX_ANSWER_LENGTH];
