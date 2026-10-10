@@ -472,6 +472,12 @@ static int st_sec_n=0;
 static int st_sec_hitches=0;
 static double st_sec_logic=0.0, st_sec_vbl=0.0, st_sec_wait=0.0;
 static Uint32 st_sec_start=0;
+// PORT: 1Hz-hitch diagnosis. Track the worst frame's component split per
+// second, plus ms since the previous hitch, so a periodic hitch reveals its
+// exact period and where the time goes (logic/vbl/wait).
+static float st_sec_worst_logic=0.0f, st_sec_worst_vbl=0.0f, st_sec_worst_wait=0.0f;
+static Uint32 st_last_hitch_tick=0;
+static int st_frame_no=0;
 
 static DEBUG_overlay_STRUCT* stutter_overlay_stats=NULL;
 static DEBUG_overlay_STRUCT* stutter_overlay_spark=NULL;
@@ -535,12 +541,17 @@ if(stuttermeter==0)
 	stutter_ring_i=(stutter_ring_i+1)%STUTTER_RING;
 	if(stutter_ring_n<STUTTER_RING)stutter_ring_n++;
 
+	st_frame_no++;
+
 	if(total_ms>STUTTER_HITCH_MS)
 	{
 		st_sec_hitches++;
 		stutter_hitch_total++;
+		Uint32 st_now=SDL_GetTicks();
+		Uint32 st_per=st_last_hitch_tick==0?0:st_now-st_last_hitch_tick;
+		st_last_hitch_tick=st_now;
 		char line[256];
-		sprintf(line,"[STUTTER] total=%.1fms logic=%.1fms vbl=%.1fms wait=%.1fms\n",total_ms,logic_ms,vbl_ms,wait_ms);
+		sprintf(line,"[STUTTER] total=%.1fms logic=%.1fms vbl=%.1fms wait=%.1fms per=%ums frame=%d\n",total_ms,logic_ms,vbl_ms,wait_ms,st_per,st_frame_no);
 		fprintf(stderr,"%s",line);
 		if(stutter_logfile==NULL)
 		{
@@ -556,7 +567,7 @@ if(stuttermeter==0)
 		if(stutter_logfile!=NULL){fprintf(stutter_logfile,"%s",line);fflush(stutter_logfile);}
 	}
 
-	if(total_ms>st_sec_worst)st_sec_worst=total_ms;
+	if(total_ms>st_sec_worst){st_sec_worst=total_ms;st_sec_worst_logic=logic_ms;st_sec_worst_vbl=vbl_ms;st_sec_worst_wait=wait_ms;}
 	st_sec_sum+=total_ms; st_sec_n++;
 	st_sec_logic+=logic_ms; st_sec_vbl+=vbl_ms; st_sec_wait+=wait_ms;
 
@@ -592,7 +603,21 @@ if(stuttermeter==0)
 		if(stutter_overlay_cam==NULL)stutter_overlay_cam=DEBUG_make_overlay(camline,8,32);
 		else DEBUG_update_overlay(stutter_overlay_cam,camline,8,32);
 
+		// PORT: per-second worst-frame attribution to the log, so sub-25ms
+		// periodic hitches (which never trip the [STUTTER] line) still show
+		// their component split with a timestamp. Consecutive worst frames
+		// ~1000ms apart confirm a 1Hz beat and name the culprit stage.
+		{
+			char secline[256];
+			sprintf(secline,"[STUTTER-sec] t=%ums avg=%.1fms worst=%.1fms worst_split=L:%.1f/V:%.1f/W:%.1f hitches=%d\n",
+				now,avg,st_sec_worst,st_sec_worst_logic,st_sec_worst_vbl,st_sec_worst_wait,st_sec_hitches);
+			fprintf(stderr,"%s",secline);
+			if(stutter_logfile==NULL)stutter_logfile=fopen("stutter.log","a");
+			if(stutter_logfile!=NULL){fprintf(stutter_logfile,"%s",secline);fflush(stutter_logfile);}
+		}
+
 		st_sec_worst=0.0f; st_sec_sum=0.0; st_sec_n=0; st_sec_hitches=0;
 		st_sec_logic=0.0; st_sec_vbl=0.0; st_sec_wait=0.0;
+		st_sec_worst_logic=0.0f; st_sec_worst_vbl=0.0f; st_sec_worst_wait=0.0f;
 	}
 }
