@@ -83,7 +83,10 @@ Uint64 lastvbltimer;
 
 
 //==========================================================================================================================
-void main_vbl()
+//PORT: vsync-driven pacing split. main_vbl_game() holds the 60Hz game-state
+//updates; the main loop runs it every logic tick, then renders+swaps every
+//present. main_vbl() is preserved unchanged for whilefix()/main_vbl_timed().
+void main_vbl_game()
 {//==========================================================================================================================
 
 	if(TITLESCREEN_running==1)TITLESCREEN_vbl();
@@ -97,6 +100,14 @@ void main_vbl()
 	if(fade_vbl_counter>600)fade_vbl_counter=0;
 
 	if(GAME_is_running==1)GAME_vbl();
+
+}
+
+
+void main_vbl()
+{//==========================================================================================================================
+
+	main_vbl_game();
 
 
 
@@ -437,6 +448,12 @@ int display_refresh=60;
 }
 int swap_interval=display_refresh/60;
 if(swap_interval<1)swap_interval=1;
+// PORT: vsync-driven pacing. presents_per_tick = vsyncs per 60Hz game tick
+// (1.0 on 60Hz, 2.0 on 120Hz). The main loop presents every vsync and runs
+// game logic when the accumulator trips — the swap block is the timer, so
+// no CPU gate and no phase drift is possible.
+float presents_per_tick=(float)display_refresh/60.0f;
+if(presents_per_tick<1.0f)presents_per_tick=1.0f;
 fprintf(stderr,"Display refresh %dHz, swap interval %d\n",display_refresh,swap_interval);
 #ifdef _WIN32
 		if(WGL_EXT_swap_control)
@@ -447,19 +464,18 @@ fprintf(stderr,"Display refresh %dHz, swap interval %d\n",display_refresh,swap_i
 		{vsync=0;fprintf(stderr,"Vsync Failed.\n");}
 #elif defined(__APPLE__)
 		// PORT: native macOS vsync (macos_vsync.mm). SDL3 emulates the GL
-		// swap interval in software on macOS and interval 2 does not yield
-		// reliable 16.67ms presents on 120Hz displays (frametimes showed
-		// interval-1 behavior). Drive the GPU directly; set SDL's interval
-		// to 0 so its software wait doesn't stack on top of the driver's.
-		// 120Hz -> native interval 2, 60Hz -> native interval 1: both pace
-		// presents at exactly 16.67ms, so the 60Hz software gate below just
-		// stays satisfied with no phase drift possible.
-		if(PORT_macos_set_native_swap_interval(swap_interval))
+		// swap interval in software on macOS and interval 2 is clamped or
+		// ignored in windowed mode (frametimes showed 8.33ms, not 16.67ms).
+		// Use interval 1 and pace game logic via presents_per_tick in the
+		// main loop: 120Hz presents every 8.33ms with logic every 2nd
+		// present, 60Hz presents every 16.67ms with logic every present.
+		// Either way the swap block is the timer — no drift possible.
+		if(PORT_macos_set_native_swap_interval(1))
 		{
 			SDL_GL_SetSwapInterval(0);
-			fprintf(stderr,"Native macOS swap interval %d\n",swap_interval);
+			fprintf(stderr,"Native macOS swap interval 1, %.1f presents per 60Hz tick\n",presents_per_tick);
 		}
-		else if(!SDL_GL_SetSwapInterval(swap_interval))
+		else if(!SDL_GL_SetSwapInterval(1))
 		{vsync=0;fprintf(stderr,"Vsync Failed.\n");}
 #else
 		// Linux/other: use SDL for vsync control
@@ -630,27 +646,21 @@ fprintf(stderr,"Display refresh %dHz, swap interval %d\n",display_refresh,swap_i
 
 		if(vsync==1)
 		{
-			// Game logic is tuned for 60 ticks/sec (20 substeps x 60fps = 1200/sec).
-			// Vsync alone follows the display refresh, so on a 120Hz+ screen the
-			// whole simulation runs fast. Gate logic to 60Hz; vsync still gives
-			// tear-free presentation.
-			// PORT: use a fixed timestep (lasttimer+=interval, not =newtimer) so the
-			// gate can't drift from the vsync grid, and sleep precisely with
-			// SDL_DelayNS. SDL_Delay(1) overshoots and misses the vsync deadline,
-			// dropping frames (58-59fps stutter).
+			// PORT: vsync-driven pacing. Every loop iteration presents exactly
+			// one vsync (swap interval 1); game logic runs every
+			// presents_per_tick presents (1.0 on 60Hz, 2.0 on 120Hz). The
+			// swap block is the timer — no CPU gate, so phase drift against
+			// the vsync grid is impossible by construction.
 			// PORT: stutter-debug timing. st_t0 marks the loop-iteration start; the
-			// logic/vbl/wait split lets a hitch's [STUTTER] log line show where time went.
+			// logic/vbl split lets a hitch's [STUTTER] log line show where time went.
 			Uint64 st_t0 = SDL_GetPerformanceCounter();
 			float st_logic_ms=0.0f, st_vbl_ms=0.0f, st_wait_ms=0.0f;
-			newtimer = SDL_GetPerformanceCounter();
-			Uint64 tick_interval = hires_ticks_per_second/60;
-			if(newtimer-lasttimer >= tick_interval)
+			static float present_accum=0.0f;
+			present_accum+=1.0f;
+			Uint64 st_t1 = SDL_GetPerformanceCounter();
+			if(present_accum>=presents_per_tick)
 			{
-				lasttimer+=tick_interval;
-				// if badly behind (e.g. breakpoint), resync instead of spiral of death
-				if(newtimer-lasttimer >= tick_interval)lasttimer=newtimer;
-
-				Uint64 st_t1 = SDL_GetPerformanceCounter();
+				present_accum-=presents_per_tick;
 				// PORT: wobble test — GAME_main() picks substeps/frame by movement:
 				// run 20 (5.0px cardinal / 4.0px diagonal, Bob's original run speeds),
 				// walk-diagonal 20 (2.0px), walk-cardinal 21 (3.0px); see the PORT
@@ -661,7 +671,7 @@ fprintf(stderr,"Display refresh %dHz, swap interval %d\n",display_refresh,swap_i
 
 				//ERROR_check_SDL_and_GL_errors("GAME_main");
 
-				main_vbl();
+				main_vbl_game();
 				Uint64 st_t3 = SDL_GetPerformanceCounter();
 
 				st_logic_ms=(float)((st_t2-st_t1)*1000.0/(double)hires_ticks_per_second);
@@ -671,21 +681,11 @@ fprintf(stderr,"Display refresh %dHz, swap interval %d\n",display_refresh,swap_i
 
 				framesrendered++;
 			}
-			else
-			{
-				Uint64 st_w0 = SDL_GetPerformanceCounter();
-				Uint64 target = lasttimer+tick_interval;
-				Uint64 now = SDL_GetPerformanceCounter();
-				if(target>now)
-				{
-					Uint64 ns_wait = (target-now)*1000000000ULL/hires_ticks_per_second;
-					// PORT: SDL_DelayPrecise busy-waits for rock-solid frametime.
-					// Burns a CPU core vs SDL_DelayNS, but precision wins.
-					if(ns_wait>0)SDL_DelayPrecise(ns_wait);
-				}
-				Uint64 st_w1 = SDL_GetPerformanceCounter();
-				st_wait_ms=(float)((st_w1-st_w0)*1000.0/(double)hires_ticks_per_second);
-			}
+			Uint64 st_t4 = SDL_GetPerformanceCounter();
+			render();
+			SDL_GL_SwapWindow(window);
+			Uint64 st_t5 = SDL_GetPerformanceCounter();
+			st_vbl_ms+=(float)((st_t5-st_t4)*1000.0/(double)hires_ticks_per_second);
 			// PORT: hand the frame's timing to the stutter debugger (debug.cpp).
 			{
 				static Uint64 st_prev_t0=0;
