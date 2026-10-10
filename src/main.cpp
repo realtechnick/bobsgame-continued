@@ -439,6 +439,23 @@ fprintf(stderr,"Display refresh %dHz, swap interval %d\n",display_refresh,swap_i
 		}
 		else
 		{vsync=0;fprintf(stderr,"Vsync Failed.\n");}
+#elif defined(__APPLE__)
+		// PORT: native macOS vsync (macos_vsync.mm). SDL3 emulates the GL
+		// swap interval in software on macOS and interval 2 does not yield
+		// reliable 16.67ms presents on 120Hz displays (frametimes showed
+		// interval-1 behavior). Drive the GPU directly; set SDL's interval
+		// to 0 so its software wait doesn't stack on top of the driver's.
+		// 120Hz -> native interval 2, 60Hz -> native interval 1: both pace
+		// presents at exactly 16.67ms, so the 60Hz software gate below just
+		// stays satisfied with no phase drift possible.
+		extern int PORT_macos_set_native_swap_interval(int);
+		if(PORT_macos_set_native_swap_interval(swap_interval))
+		{
+			SDL_GL_SetSwapInterval(0);
+			fprintf(stderr,"Native macOS swap interval %d\n",swap_interval);
+		}
+		else if(!SDL_GL_SetSwapInterval(swap_interval))
+		{vsync=0;fprintf(stderr,"Vsync Failed.\n");}
 #else
 		// Linux/other: use SDL for vsync control
 		if(!SDL_GL_SetSwapInterval(swap_interval))

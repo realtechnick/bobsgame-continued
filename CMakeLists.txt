@@ -167,6 +167,12 @@ set(SOURCE_FILES
     src/minigame/tetrid.cpp
 )
 
+# PORT: native macOS vsync (macos_vsync.mm, Objective-C++). Apple only.
+if(APPLE)
+    enable_language(OBJCXX)
+    list(APPEND SOURCE_FILES src/engine/main/macos_vsync.mm)
+endif()
+
 add_executable(bobsgame ${SOURCE_FILES})
 
 target_include_directories(bobsgame PRIVATE
@@ -192,6 +198,9 @@ add_custom_command(TARGET bobsgame POST_BUILD
 if(APPLE)
     find_library(OPENGL_LIBRARY OpenGL)
     target_link_libraries(bobsgame ${OPENGL_LIBRARY})
+    # PORT: Cocoa framework for macos_vsync.mm (NSOpenGLContext).
+    find_library(COCOA_LIBRARY Cocoa)
+    target_link_libraries(bobsgame ${COCOA_LIBRARY})
 else()
     find_package(OpenGL REQUIRED)
     target_link_libraries(bobsgame OpenGL::GL)
