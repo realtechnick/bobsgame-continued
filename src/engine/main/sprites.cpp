@@ -1215,7 +1215,7 @@ void HARDWARE_init_gfx_data()
 
 	HARDWARE_set_sprite_texture_filename_and_maybe_preload_texture(TEXT_GFX[0],"TEXT",64,64,NO_SHADOW,0);
 	HARDWARE_set_sprite_texture_filename_and_maybe_preload_texture(TEXT_GFX[1],"TEXT",64,64,NO_SHADOW,0);
-	HARDWARE_set_sprite_texture_filename_and_maybe_preload_texture(TEXTANSWER_GFX,"TEXTANSWER",64,32,NO_SHADOW,0);
+	HARDWARE_set_sprite_texture_filename_and_maybe_preload_texture(TEXTANSWER_GFX,"TEXTANSWER",64,64,NO_SHADOW,0);//PORT: was 64x32; the answer layout draws up to 6 choices across 64px tall, the 32px texture cut off answers 4-6
 	HARDWARE_set_sprite_texture_filename_and_maybe_preload_texture(TEXTSPRITEWINDOW_GFX[0],"TEXTSPRITEWINDOW",32,64,NO_SHADOW,0);
 	HARDWARE_set_sprite_texture_filename_and_maybe_preload_texture(TEXTSPRITEWINDOW_GFX[1],"TEXTSPRITEWINDOW",32,64,NO_SHADOW,0);
 	HARDWARE_set_sprite_texture_filename_and_maybe_preload_texture(PINGPADDLE_GFX,"PINGPADDLE",8,32,NO_SHADOW,0);
