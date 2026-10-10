@@ -50,12 +50,15 @@ void calculate_fps()
 
 				}
 
-				if(secondstotal>1&&fps>70&&vsync==1)
-				{
-					vsync=0;
-					CAPTION_make_caption(NULL,1,CAPTION_CENTERED_X,10,10,"Please Turn VSync On - See Readme",FONT_HUGE_ID,RED,CLEAR,5,1);
-					//fprintf(stderr,"Vsync Hard-Limiter Activated. Please check your Video Settings Control Panel for a \"vertical sync\" option and turn it on for smoother gameplay.\n");
-				}
+				// PORT: Bob's vsync hard-limiter removed. It assumed fps>70 meant
+				// vsync was broken and set vsync=0 (disabling vsync!). Under
+				// vsync-driven pacing the swap block is the timer, so the
+				// heuristic is obsolete and could false-trigger on 120Hz.
+				// if(secondstotal>1&&fps>70&&vsync==1)
+				// {
+				// 	vsync=0;
+				// 	CAPTION_make_caption(NULL,1,CAPTION_CENTERED_X,10,10,"Please Turn VSync On - See Readme",FONT_HUGE_ID,RED,CLEAR,5,1);
+				// }
 			}
 
 
