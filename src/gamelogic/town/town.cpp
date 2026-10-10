@@ -920,14 +920,14 @@ static NPC* schoolparkinglotcars[8]={NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL};
 	if(CLOCK_hour>=6&&CLOCK_hour<=12+5&&(CLOCK_hour!=6||CLOCK_minute>=30))
 	{
 		//PORT: +16px centers 64px 1.0x cars where 96px 1.5x cars sat.
-		NPC_create_car_if_within_range_else_delete(&schoolparkinglotcars[0],332*8+16,200*8+16,RIGHT);
+		NPC_create_car_if_within_range_else_delete(&schoolparkinglotcars[0],332*8+16,200*8+24,RIGHT);
 		//NPC_create_car_if_within_range_else_delete(&schoolparkinglotcars[1],333*8,212*8,RIGHT);
-		NPC_create_car_if_within_range_else_delete(&schoolparkinglotcars[2],331*8+16,225*8+16,LEFT);
-		NPC_create_car_if_within_range_else_delete(&schoolparkinglotcars[3],332*8+16,238*8+16,RIGHT);
+		NPC_create_car_if_within_range_else_delete(&schoolparkinglotcars[2],331*8+16,225*8+24,LEFT);
+		NPC_create_car_if_within_range_else_delete(&schoolparkinglotcars[3],332*8+16,238*8+24,RIGHT);
 		//NPC_create_car_if_within_range_else_delete(&schoolparkinglotcars[4],332*8,251*8,RIGHT);
-		NPC_create_car_if_within_range_else_delete(&schoolparkinglotcars[5],331*8+16,265*8+16,RIGHT);
+		NPC_create_car_if_within_range_else_delete(&schoolparkinglotcars[5],331*8+16,265*8+24,RIGHT);
 		//NPC_create_car_if_within_range_else_delete(&schoolparkinglotcars[6],332*8,277*8,LEFT);
-		NPC_create_car_if_within_range_else_delete(&schoolparkinglotcars[7],333*8+16,290*8+16,RIGHT);
+		NPC_create_car_if_within_range_else_delete(&schoolparkinglotcars[7],333*8+16,290*8+24,RIGHT);
 	}
 	else
 	{
