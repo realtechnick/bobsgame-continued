@@ -26,7 +26,7 @@ extern bool TEXTANSWER_deinit_answer_box;
 extern int TEXTANSWER_amt_of_chunks;
 extern int TEXTANSWER_amt_of_sprites;
 extern int TEXTANSWER_selected_answer;
-extern int TEXTANSWER_answerbox_indexed_gfx_data[64*32*3*2];
+extern unsigned char TEXTANSWER_answerbox_indexed_gfx_data[64*32*3*2];
 extern char TEXTANSWER_selected_answer_string[MAX_ANSWER_LENGTH];
 //================
 //prototypes
