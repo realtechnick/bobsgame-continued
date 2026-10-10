@@ -33,6 +33,46 @@ int metatile_x[4*METATILES_POSSIBLE]={0};
 int metatile_y[4*METATILES_POSSIBLE]={0};
 bool metatile_used[4*METATILES_POSSIBLE]={0};
 
+#define METATILE_WORK_QUEUE_SIZE 512
+
+typedef struct
+{
+	int bg_layer;
+	int flat_slot;
+	int clipx, clipy;
+	int map_width_pixels, map_height_pixels;
+	unsigned short* map;
+} MetatileWorkItem;
+
+typedef struct
+{
+	int flat_slot;
+	unsigned char* rgba;
+} MetatileDoneItem;
+
+static MetatileWorkItem metatile_work_queue[METATILE_WORK_QUEUE_SIZE];
+static int metatile_work_head=0;
+static int metatile_work_tail=0;
+static SDL_mutex* metatile_work_mutex=NULL;
+static SDL_cond* metatile_work_cond=NULL;
+
+static MetatileDoneItem metatile_done_queue[METATILE_WORK_QUEUE_SIZE];
+static int metatile_done_head=0;
+static int metatile_done_tail=0;
+static SDL_mutex* metatile_done_mutex=NULL;
+
+static SDL_Thread* metatile_thread=NULL;
+static int metatile_thread_run=0;
+static bool metatile_queued[4*METATILES_POSSIBLE]={0};
+//PORT: worker thread functions (defined below)
+void metatile_worker_start();
+void metatile_worker_stop();
+void metatile_process_completions(int max_upload);
+unsigned char* HARDWARE_raster_metatile(int bg_layer,int MAP_width_pixels,int MAP_height_pixels,int clipx,int clipy,unsigned short* map);
+void HARDWARE_upload_metatile(int bg_layer,int metatile_index,unsigned char* MAP_rgba_data);
+
+
+
 bool metatile_map=1;
 
 unsigned short GAME_temp_TILESET_PALETTE[256]= {0};
@@ -982,37 +1022,7 @@ void HARDWARE_load_metatile(int bg_layer, int MAP_width_pixels, int MAP_height_p
 //the render thread only does the 64KB texture upload, so chunk loading can't spike frame time.
 //==========================================================================================================================
 
-#define METATILE_WORK_QUEUE_SIZE 512
 
-typedef struct
-{
-	int bg_layer;
-	int flat_slot;
-	int clipx, clipy;
-	int map_width_pixels, map_height_pixels;
-	unsigned short* map;
-} MetatileWorkItem;
-
-typedef struct
-{
-	int flat_slot;
-	unsigned char* rgba;
-} MetatileDoneItem;
-
-static MetatileWorkItem metatile_work_queue[METATILE_WORK_QUEUE_SIZE];
-static int metatile_work_head=0;
-static int metatile_work_tail=0;
-static SDL_mutex* metatile_work_mutex=NULL;
-static SDL_cond* metatile_work_cond=NULL;
-
-static MetatileDoneItem metatile_done_queue[METATILE_WORK_QUEUE_SIZE];
-static int metatile_done_head=0;
-static int metatile_done_tail=0;
-static SDL_mutex* metatile_done_mutex=NULL;
-
-static SDL_Thread* metatile_thread=NULL;
-static int metatile_thread_run=0;
-static bool metatile_queued[4*METATILES_POSSIBLE]={0};
 
 static int metatile_worker_fn(void* data)
 {
