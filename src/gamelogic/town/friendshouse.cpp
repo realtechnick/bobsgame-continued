@@ -473,6 +473,8 @@ void bobsgame_TOWNFRIENDGarage_Map_Run_Function(int MAP_just_loaded)
 		bobsvan_npc->non_walkable=1;
 		bobsvan_npc->animation_off=1;
 		bobsvan_npc->scale=1.0f; //PORT: was 1.5f (non-integer, forced bilinear).
+		//PORT: force full 64x64 draw size (see npccar.cpp).
+		if(bobsvan_npc->sprite!=NULL){bobsvan_npc->sprite->draw_size_x=64;bobsvan_npc->sprite->draw_size_y=64;}
 	}
 	if(bobsvan_npc!=NULL)
 	{
