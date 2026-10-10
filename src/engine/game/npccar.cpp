@@ -79,13 +79,13 @@ void NPC_set_car_anim_frame_now(NPC** npcpp,int frame)
 			npc->size_y = 64;
 		}
 
-		//PORT: force full 64x64 draw size. draw_size defaults to content_size
-		//(tight bounding box), which makes the UVs sample only part of the
-		//texture (front third cut off). Cars need the full texture.
-		if(npc->sprite!=NULL)
+		//PORT: force draw_size to match texture size. draw_size defaults to
+		//content_size (tight bounding box), which makes UVs sample only part
+		//of the texture (front cut off). Use full texture size for cars.
+		if(npc->sprite!=NULL&&npc->sprite->gfx!=NULL)
 		{
-			npc->sprite->draw_size_x=64;
-			npc->sprite->draw_size_y=64;
+			npc->sprite->draw_size_x=npc->sprite->gfx->texture_size_x;
+			npc->sprite->draw_size_y=npc->sprite->gfx->texture_size_y;
 		}
 	}
 }
