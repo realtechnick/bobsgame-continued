@@ -67,7 +67,7 @@ extern int SCREEN_HEIGHT_TILES;//24
 //================
 
 void delete_unneeded_metatiles();
-void create_needed_metatiles(int bg);
+void create_needed_metatiles(int bg,int max_create);
 void render();
 void set_zoom();
 
