@@ -221,7 +221,7 @@ void NPC_create_car_if_within_range_else_delete(NPC** npcpp,int x,int y,int dire
 	NPC* npc = *npcpp;
 
 
-	if(MAP_is_xy_within_screen_by_amt(x+96/2,y+96/2,128)==1)//&&xy_within_touchmap_cam(x+64/2,y+64/2)==0)
+	if(MAP_is_xy_within_screen_by_amt(x+64/2,y+64/2,128)==1)//&&xy_within_touchmap_cam(x+64/2,y+64/2)==0)
 	{
 		if(npc==NULL)NPC_create_car(npcpp,x,y,direction);
 	}
