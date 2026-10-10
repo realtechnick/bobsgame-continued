@@ -927,8 +927,18 @@ SPRITE* HARDWARE_create_sprite(GFX* gfx, int gfx_index, int layer, float scale, 
 
 
 		//the texture size isnt set until HARDWARE_update_sprite_texture calls HARDWARE_preload_sprite_texture_frame
-		sprite->draw_size_x=gfx->content_size_x;
-		sprite->draw_size_y=gfx->content_size_y;
+		//PORT: cars bypass content_size (tight bounding box) which breaks UVs;
+		//use full data_size so the whole 64x64 sprite renders.
+		if(gfx->car==1)
+		{
+			sprite->draw_size_x=gfx->data_size_x;
+			sprite->draw_size_y=gfx->data_size_y;
+		}
+		else
+		{
+			sprite->draw_size_x=gfx->content_size_x;
+			sprite->draw_size_y=gfx->content_size_y;
+		}
 
 		HARDWARE_sprites[slot]=sprite;
 
