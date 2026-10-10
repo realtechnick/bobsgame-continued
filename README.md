@@ -1,3 +1,8 @@
+> **Bob's Game — Continued.** This is the completion build: working toward a finished, fully playable game.
+> Forked from [realtechnick/bobsgame-modern](https://github.com/realtechnick/bobsgame-modern) at tag `preservation/1.0` (commit `e4c99da`).
+> The upstream repo stays a pristine 1:1 preservation of Robert Pelloni's recovered source — all new content and design lives here.
+> **Authorship:** everything by Bob is Bob's. New dialogue, systems, and content are Nick's — never presented as Bob-authored.
+
 # Bob's Game — Modern SDL3 Port
 
 A preservation port of **Robert Pelloni's** cult DS homebrew RPG *Bob's Game* (2003-2009), recovered from the original C++ source and migrated from SDL2 to SDL3 for modern systems.
