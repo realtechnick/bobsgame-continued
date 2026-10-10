@@ -167,6 +167,12 @@ void whilefix()
 #include "string"
 #include "fstream"
 
+#ifdef __APPLE__
+// PORT: native macOS vsync (macos_vsync.mm). Declared here at file scope —
+// Clang rejects extern "C" on block-scope declarations.
+extern "C" int PORT_macos_set_native_swap_interval(int);
+#endif
+
 char *textFileRead(const char *fn) {
 
 FILE *fp;
@@ -448,7 +454,6 @@ fprintf(stderr,"Display refresh %dHz, swap interval %d\n",display_refresh,swap_i
 		// 120Hz -> native interval 2, 60Hz -> native interval 1: both pace
 		// presents at exactly 16.67ms, so the 60Hz software gate below just
 		// stays satisfied with no phase drift possible.
-		extern "C" int PORT_macos_set_native_swap_interval(int);
 		if(PORT_macos_set_native_swap_interval(swap_interval))
 		{
 			SDL_GL_SetSwapInterval(0);
