@@ -476,6 +476,28 @@ static void MINIMAP_draw_npc(NPC* npc, int ox, int oy, float px2u, float bx0, fl
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 }
 
+//===========================================================================================================================
+static void MINIMAP_draw_npc_layer(int sprite_layer,int ox,int oy,float px2u,float bx0,float by0,float bsz)
+{//===========================================================================================================================
+	//Draws all NPC sprites (plus Yuu) whose layer matches, in game order.
+	//sprite_layer 0..3, or 99 for layer>=4 (drawn last, like render.cpp).
+	NPC* npc;
+	for(npc=first_NPC;npc!=NULL;npc=npc->next)
+	{
+		if(npc==PLAYER_npc)continue;
+		int nl=npc->layer;
+		if(sprite_layer==99){if(nl<4)continue;}
+		else if(nl!=sprite_layer)continue;
+		MINIMAP_draw_npc(npc,ox,oy,px2u,bx0,by0,bsz);
+	}
+	if(PLAYER_npc!=NULL)
+	{
+		int nl=PLAYER_npc->layer;
+		int match=(sprite_layer==99)?(nl>=4):(nl==sprite_layer);
+		if(match)MINIMAP_draw_npc(PLAYER_npc,ox,oy,px2u,bx0,by0,bsz);
+	}
+}
+
 void MINIMAP_draw()
 {//===========================================================================================================================
 	if(minimap_on==0)return;
@@ -485,69 +507,42 @@ void MINIMAP_draw()
 	int mh=HARDWARE_map_height_tiles;
 	if(mw<=0||mh<=0)return;
 
-	//bg layers back-to-front, same order the renderer draws them
-	unsigned short* mlayers[4];
-	mlayers[0]=HARDWARE_map_3;
-	mlayers[1]=HARDWARE_map_0;
-	mlayers[2]=HARDWARE_map_2;
-	mlayers[3]=HARDWARE_map_1;
+	//bg layers by number
+	unsigned short* bgl[4];
+	bgl[3]=HARDWARE_map_3;
+	bgl[0]=HARDWARE_map_0;
+	bgl[2]=HARDWARE_map_2;
+	bgl[1]=HARDWARE_map_1;
 	int li;
-	for(li=0;li<4;li++)if(mlayers[li]==NULL)return;
+	for(li=0;li<4;li++)if(bgl[li]==NULL)return;
 
-	//1:1 -- origin is Yuu's position minus half the box, pixel-exact. No quantization
-	//needed: at full res the map scrolls pixel-smooth and the dot lands dead-center.
+	//exact game render order (render.cpp): bg3,spr0, bg0,spr3, bg2,spr2, bg1,spr1, spr4+
+	int bg_order[4]={3,0,2,1};
+	int spr_after[4]={0,3,2,1};
+
+	//1:1 -- origin is Yuu's position minus half the box, pixel-exact
 	int ox=PLAYER_npc->MAP_x-(MINIMAP_PX/2);
 	int oy=PLAYER_npc->MAP_y-(MINIMAP_PX/2);
 
-	int bx,by;
-	for(by=0;by<MINIMAP_PX;by++)
+	float px2u=0.25f; //units per physical px (fallback)
+	if(WINDOW_DRAWABLE_W>0)px2u=640.0f/(float)WINDOW_DRAWABLE_W;
+	float mm_box=128.0f; //fallback if drawable size unknown
+	if(WINDOW_DRAWABLE_W>0)mm_box=512.0f*640.0f/(float)WINDOW_DRAWABLE_W;
+	float mm_x=(float)MINIMAP_X;
+	float mm_y=480.0f-8.0f-mm_box;
+
+	//clip everything to the box (GL coords are y-up)
+	if(WINDOW_DRAWABLE_W>0&&WINDOW_DRAWABLE_H>0)
 	{
-		int wy=oy+by;
-		int ty=wy>=0?wy/8:-1; //floor-divide: C truncates toward zero
-		int pyi=wy>=0?wy%8:-1;
-		for(bx=0;bx<MINIMAP_PX;bx++)
-		{
-			int wx=ox+bx;
-			int tx=wx>=0?wx/8:-1;
-			int pxi=wx>=0?wx%8:-1;
-			int o=(by*MINIMAP_PX+bx)*4;
-			unsigned char r=14,g=18,b=28; //out-of-map: dark slate
-			if(tx>=0&&ty>=0&&tx<mw&&ty<mh)
-			{
-				int tii=pxi+pyi*8; //pixel index inside the 8x8 tile
-				for(li=0;li<4;li++)
-				{
-					int tile=mlayers[li][tx+ty*mw];
-					int pi=HARDWARE_map_tileset[64*tile+tii];
-					if(pi!=0) //transparent pixels show the layer beneath
-					{
-						r=HARDWARE_MAP_PALETTE_ENHANCED_RGB[3*pi+0];
-						g=HARDWARE_MAP_PALETTE_ENHANCED_RGB[3*pi+1];
-						b=HARDWARE_MAP_PALETTE_ENHANCED_RGB[3*pi+2];
-					}
-				}
-			}
-			minimap_px[o+0]=r;
-			minimap_px[o+1]=g;
-			minimap_px[o+2]=b;
-			minimap_px[o+3]=255;
-		}
+		GLint sx=(GLint)(mm_x*WINDOW_DRAWABLE_W/640.0f);
+		GLint sy=(GLint)((480.0f-mm_y-mm_box)*WINDOW_DRAWABLE_H/480.0f);
+		GLsizei swd=(GLsizei)(mm_box*WINDOW_DRAWABLE_W/640.0f);
+		GLsizei sht=(GLsizei)(mm_box*WINDOW_DRAWABLE_H/480.0f);
+		glEnable(GL_SCISSOR_TEST);
+		glScissor(sx,sy,swd,sht);
 	}
 
-	//1px light-grey border
-	int i;
-	for(i=0;i<MINIMAP_PX;i++)
-	{
-		int t=i*4;
-		int b=((MINIMAP_PX-1)*MINIMAP_PX+i)*4;
-		int l=(i*MINIMAP_PX)*4;
-		int rr=(i*MINIMAP_PX+MINIMAP_PX-1)*4;
-		minimap_px[t+0]=160;minimap_px[t+1]=160;minimap_px[t+2]=160;
-		minimap_px[b+0]=160;minimap_px[b+1]=160;minimap_px[b+2]=160;
-		minimap_px[l+0]=160;minimap_px[l+1]=160;minimap_px[l+2]=160;
-		minimap_px[rr+0]=160;minimap_px[rr+1]=160;minimap_px[rr+2]=160;
-	}
-
+	//persistent texture, updated per pass
 	if(minimap_tex_id==0)
 	{
 		glGenTextures(1,&minimap_tex_id);
@@ -556,50 +551,88 @@ void MINIMAP_draw()
 		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
 	}
-	else
+
+	int step;
+	for(step=0;step<4;step++)
 	{
+		int bg=bg_order[step];
+		unsigned short* ml=bgl[bg];
+		int is_first=(step==0);
+
+		//rasterize this bg layer; transparent -> alpha 0 (blending shows beneath).
+		//first pass is opaque dark slate so the box has a base.
+		int bx,by;
+		for(by=0;by<MINIMAP_PX;by++)
+		{
+			int wy=oy+by;
+			int ty=wy>=0?wy/8:-1; //floor-divide: C truncates toward zero
+			int pyi=wy>=0?wy%8:-1;
+			for(bx=0;bx<MINIMAP_PX;bx++)
+			{
+				int wx=ox+bx;
+				int tx=wx>=0?wx/8:-1;
+				int pxi=wx>=0?wx%8:-1;
+				int o=(by*MINIMAP_PX+bx)*4;
+				unsigned char r=14,g=18,b=28,a=255;
+				if(tx>=0&&ty>=0&&tx<mw&&ty<mh)
+				{
+					int tile=ml[tx+ty*mw];
+					int pi=HARDWARE_map_tileset[64*tile+pxi+pyi*8];
+					if(pi==0)
+					{
+						if(!is_first)a=0;
+					}
+					else
+					{
+						r=HARDWARE_MAP_PALETTE_ENHANCED_RGB[3*pi+0];
+						g=HARDWARE_MAP_PALETTE_ENHANCED_RGB[3*pi+1];
+						b=HARDWARE_MAP_PALETTE_ENHANCED_RGB[3*pi+2];
+					}
+				}
+				else if(!is_first)a=0;
+				minimap_px[o+0]=r;
+				minimap_px[o+1]=g;
+				minimap_px[o+2]=b;
+				minimap_px[o+3]=a;
+			}
+		}
+
+		//1px light-grey border
+		int i;
+		for(i=0;i<MINIMAP_PX;i++)
+		{
+			int t=i*4;
+			int b=((MINIMAP_PX-1)*MINIMAP_PX+i)*4;
+			int l=(i*MINIMAP_PX)*4;
+			int rr=(i*MINIMAP_PX+MINIMAP_PX-1)*4;
+			minimap_px[t+0]=160;minimap_px[t+1]=160;minimap_px[t+2]=160;minimap_px[t+3]=255;
+			minimap_px[b+0]=160;minimap_px[b+1]=160;minimap_px[b+2]=160;minimap_px[b+3]=255;
+			minimap_px[l+0]=160;minimap_px[l+1]=160;minimap_px[l+2]=160;minimap_px[l+3]=255;
+			minimap_px[rr+0]=160;minimap_px[rr+1]=160;minimap_px[rr+2]=160;minimap_px[rr+3]=255;
+		}
+
 		glBindTexture(GL_TEXTURE_2D,minimap_tex_id);
 		glTexSubImage2D(GL_TEXTURE_2D,0,0,0,MINIMAP_PX,MINIMAP_PX,GL_RGBA,GL_UNSIGNED_BYTE,minimap_px);
+		glEnable(GL_TEXTURE_2D);
+
+		GLfloat box[]={mm_x,mm_y+mm_box,0,  mm_x+mm_box,mm_y+mm_box,0,     mm_x+mm_box,mm_y,0,   mm_x,mm_y,0};
+		GLfloat tex[]={0,1, 1,1, 1,0, 0,0};
+
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		glVertexPointer(3,GL_FLOAT,0,box);
+		glTexCoordPointer(2,GL_FLOAT,0,tex);
+		glDrawArrays(GL_TRIANGLE_FAN,0,4);
+		glDisableClientState(GL_VERTEX_ARRAY);
+		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+
+		//sprites for this layer (game order)
+		MINIMAP_draw_npc_layer(spr_after[step],ox,oy,px2u,mm_x,mm_y,mm_box);
 	}
 
-	//draw the 512-texel texture at 512 true physical px on a side: with a Retina
-	//backing store (SDL_WINDOW_HIGH_PIXEL_DENSITY) every texel is native 1x1
-	//physical -- the same pixel quality as the gameplay, just smaller.
-	//(same quad pattern as draw_texture_struct, which always draws at texture size)
-	float mm_box=128.0f; //fallback if drawable size unknown
-	if(WINDOW_DRAWABLE_W>0)mm_box=512.0f*640.0f/(float)WINDOW_DRAWABLE_W;
-	float mm_x=(float)MINIMAP_X;
-	float mm_y=480.0f-8.0f-mm_box;
+	//sprites on layer >=4 draw last, like the game
+	MINIMAP_draw_npc_layer(99,ox,oy,px2u,mm_x,mm_y,mm_box);
 
-	glBindTexture(GL_TEXTURE_2D,minimap_tex_id);
-	glEnable(GL_TEXTURE_2D);
-
-	GLfloat box[] = {mm_x,mm_y+mm_box,0,  mm_x+mm_box,mm_y+mm_box,0,     mm_x+mm_box,mm_y,0,   mm_x,mm_y,0};
-	GLfloat tex[] = {0,1, 1,1, 1,0, 0,0};
-
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-
-	glVertexPointer(3, GL_FLOAT, 0,box);
-	glTexCoordPointer(2, GL_FLOAT, 0, tex);
-
-	glDrawArrays(GL_TRIANGLE_FAN,0,4);
-
-	glDisableClientState(GL_VERTEX_ARRAY);
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-
-	//NPC sprites at 1:1 physical px: people, cars, signs -- drawn from each NPC's
-	//current frame in the preloaded texture cache, so walk animation matches
-	//the game. Yuu last (on top).
-	float px2u=0.25f; //units per physical px (fallback)
-	if(WINDOW_DRAWABLE_W>0)px2u=640.0f/(float)WINDOW_DRAWABLE_W;
-
-	NPC* npc;
-	for(npc=first_NPC;npc!=NULL;npc=npc->next)
-	{
-		if(npc==PLAYER_npc)continue;
-		MINIMAP_draw_npc(npc,ox,oy,px2u,mm_x,mm_y,mm_box);
-	}
-	MINIMAP_draw_npc(PLAYER_npc,ox,oy,px2u,mm_x,mm_y,mm_box);
+	glDisable(GL_SCISSOR_TEST);
 
 }
