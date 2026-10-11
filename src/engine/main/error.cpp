@@ -622,7 +622,7 @@ void MINIMAP_draw()
 
 		float mm_u=(float)mm_res/(float)MINIMAP_PX;
 		GLfloat box[]={mm_x,mm_y+mm_box,0,  mm_x+mm_box,mm_y+mm_box,0,     mm_x+mm_box,mm_y,0,   mm_x,mm_y,0};
-		GLfloat tex[]={0,1, mm_u,1, mm_u,1-mm_u, 0,1-mm_u};
+		GLfloat tex[]={0,mm_u, mm_u,mm_u, mm_u,0, 0,0};
 
 		glEnableClientState(GL_VERTEX_ARRAY);
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
