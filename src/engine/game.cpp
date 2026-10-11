@@ -5,7 +5,7 @@
 //#include "game.h"
 
 
-int GAMESTATE= 0;//PORT: INTRO for first-run builds (was 1=TOWN sandbox)
+int GAMESTATE= 1;//PORT: TOWN sandbox for gBev testing (was 0=INTRO)
 
 int GLOBAL_debug_level_select=78;
 
