@@ -377,19 +377,19 @@ void DEBUG_draw_overlays()
 }
 
 //===========================================================================================================================
-// MINIMAP test -- CONTINUED (Nick), 2026-10-11 (v6).
+// MINIMAP test -- CONTINUED (Nick), 2026-10-11 (v7).
 // 512x512 texels, 1 texel = 1 game px (full-res, no undersampling), drawn at
-// 256 backing-store px on a side: each texel is 0.5x0.5 backing px, which lands
-// as true 1x1 physical after the OS Retina upscale. Covers 512x512 game px
-// centered on Yuu. All 4 bg layers composited back-to-front (3,0,2,1) with
-// HARDWARE_MAP_PALETTE_ENHANCED_RGB (time-of-day correct). At 1:1 no origin
-// quantization is needed: the map scrolls pixel-smooth and the white player
-// dot sits dead-center. Toggle with F4.
+// 512 true physical px on a side: with the Retina backing store
+// (SDL_WINDOW_HIGH_PIXEL_DENSITY) every texel is native 1x1 physical. Covers
+// 512x512 game px centered on Yuu. All 4 bg layers composited back-to-front
+// (3,0,2,1) with HARDWARE_MAP_PALETTE_ENHANCED_RGB (time-of-day correct).
+// At 1:1 no origin quantization is needed: the map scrolls pixel-smooth and
+// the white player dot sits dead-center. Toggle with F4.
 //===========================================================================================================================
 #define MINIMAP_PX 512 //texture texels; 1 texel = 1 game px
 #define MINIMAP_X 8
-//on-screen box is sized at draw time: 256 backing-store px on a side, so texels
-//land as true 1x1 physical after the OS Retina upscale
+//on-screen box is sized at draw time: 512 true physical px on a side, so texels
+//are native 1x1 physical (requires the Retina backing store)
 
 int minimap_on=1;
 
@@ -496,11 +496,12 @@ void MINIMAP_draw()
 		glTexSubImage2D(GL_TEXTURE_2D,0,0,0,MINIMAP_PX,MINIMAP_PX,GL_RGBA,GL_UNSIGNED_BYTE,minimap_px);
 	}
 
-	//draw the 512-texel texture at 256 backing-store px on a side: each texel is
-	//0.5x0.5 backing px, which is true 1x1 physical after the OS Retina upscale
+	//draw the 512-texel texture at 512 true physical px on a side: with a Retina
+	//backing store (SDL_WINDOW_HIGH_PIXEL_DENSITY) every texel is native 1x1
+	//physical -- the same pixel quality as the gameplay, just smaller.
 	//(same quad pattern as draw_texture_struct, which always draws at texture size)
 	float mm_box=128.0f; //fallback if drawable size unknown
-	if(WINDOW_DRAWABLE_W>0)mm_box=256.0f*640.0f/(float)WINDOW_DRAWABLE_W;
+	if(WINDOW_DRAWABLE_W>0)mm_box=512.0f*640.0f/(float)WINDOW_DRAWABLE_W;
 	float mm_x=(float)MINIMAP_X;
 	float mm_y=480.0f-8.0f-mm_box;
 
