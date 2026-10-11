@@ -4,43 +4,43 @@
 > The upstream repo stays a pristine 1:1 preservation of Robert Pelloni's recovered source — all new content and design lives here.
 > **Authorship:** everything by Bob is Bob's. New dialogue, systems, and content are Nick's — never presented as Bob-authored.
 
-# Bob's Game — Modern SDL3 Port
+# Bob's Game — Continued
 
-A preservation port of **Robert Pelloni's** cult DS homebrew RPG *Bob's Game* (2003-2009), recovered from the original C++ source and migrated from SDL2 to SDL3 for modern systems.
+The completion build of **Robert Pelloni's** cult DS homebrew RPG *Bob's Game* (2003-2009), recovered from the original C++ source and ported to modern SDL3.
 
-**Status: First playable build** (2026-10-06) — title screen through town exploration works on Apple Silicon Mac.
+**Status (2026-10-10):** The base port is virtually complete — stable, playable, and running at a rock-solid 120Hz on Apple Silicon. Demo 2 has been completed end-to-end. Work is now focused on finishing what Bob started: completing the story, systems, features, and content.
 
 ## About
 
-Bob's Game is a 2D RPG/life-sim by Robert Pelloni. This is preservation work — Pelloni has passed away, and this may be among the last surviving copies of the source. The goal is a 1:1 faithful port: restore Bob's intended behavior, don't reinvent it.
+Bob's Game is a 2D RPG/life-sim by Robert Pelloni. Pelloni passed away, and this may be among the last surviving copies of the source. The preservation port ([bobsgame-modern](https://github.com/realtechnick/bobsgame-modern)) restored his code 1:1 — and now this repo continues where he left off.
 
 **Original source:** `bobsgamed/okClassic` (96 .cpp, 101 .h files)
 **Supplemental data:** `bobsgame/BobsGameOnline` v8830 (257 maps)
 
 ## What's Working
 
-**Title Screen**
-- Green "bob's game" logo with shine animation, correctly centered
-- "a game by one person" tagline and "press the action button" prompt
-
-**Gameplay**
-- Town and suburb fully walkable
-- School traversable without crashes
+**Core Game**
+- Title screen through town exploration, fully playable
+- Demo 2 completed end-to-end (2026-10-07)
 - Intro and "MOVING DAY" sequence run correctly
-- Yuu's house interiors load with correct brightness
-- Dialogue portraits display correctly
-- Yuu's drop shadow renders properly
+- Town, suburb, and school fully traversable
+- Yuu's house interiors with correct brightness
+- Dialogue portraits and drop shadows render correctly
+- 12 NPC dialogues written and approved
 
-**GameToy**
-- Tetrid works correctly (1.0x zoom, 640x480 window)
+**Rendering**
+- Native 120Hz vsync-driven pacing (rock-solid, no stutter)
+- Adaptive frame pacing (correct on 60Hz and 120Hz displays)
+- All vehicle sprites at sharp 1.0x integer scale
+- 640x480 internal render, 1280x960 window, nearest-neighbor
+
+**GameToy Minigames**
+- Tetrid, Ping, and Ramio all playable
+- Easy-mode win thresholds tuned for faster playtesting
 
 **Audio**
-- Music plays and loops, sound effects work, ambience works
+- Music plays and loops, sound effects and ambience work
 - Requires SDL3_mixer (see Building)
-
-**Performance**
-- 60Hz frame logic (correct on any display refresh rate)
-- ~119fps on Apple Silicon at 640x480
 
 ## Building
 
@@ -54,10 +54,16 @@ Bob's Game is a 2D RPG/life-sim by Robert Pelloni. This is preservation work —
 
 ### macOS
 ```bash
-brew install sdl3 sdl3_ttf sdl3_mixer
+brew install cmake sdl3 sdl3_ttf sdl3_mixer
+git clone https://github.com/realtechnick/bobsgame-continued.git
+cd bobsgame-continued
 mkdir build && cd build
 cmake -DBOBSGAME_ENABLE_AUDIO=ON ..
 make -j$(sysctl -n hw.ncpu)
+```
+
+The game needs the original `data/` assets (not in git). Place the `data/` folder in `build/` alongside the binary, then:
+```bash
 ./bobsgame
 ```
 
@@ -74,30 +80,24 @@ make -j$(nproc)
 ## Project Structure
 
 ```
-src/                    # C++ source (preserved 1:1 from original)
+src/                    # C++ source (Bob's original, plus new content)
   engine/               # Core engine (rendering, game loop, audio)
   gamelogic/            # Game logic (maps, NPCs, dialogue)
   minigame/             # Minigames (tetrid, ramio, ping, etc.)
   shaders/              # GLSL shaders
   GL/                   # Bundled GLEW headers
-data/                   # Original game data (from okClassic)
-data_v8830/             # Supplemental v8830 data (archived, not yet integrated)
+data/                   # Original game data (from okClassic, not in git)
 cmake/                  # Build config and SDL3_mixer compatibility shim
 ```
 
 ## Philosophy
 
-**Preservation first.** Bob's code is meticulously designed — among the most advanced DS homebrew projects. When something breaks in the port, the answer is almost always "restore Bob's intended behavior," not "redesign the system." Fixes are source-faithful; refactors wait until preservation is complete.
+**Finish what Bob started.** The preservation work proved Bob's code is meticulously designed — among the most advanced DS homebrew projects. With the base port stable, this repo is where the game gets completed: story, systems, features, and content, guided by what Bob built and where it was heading.
 
-See `BOB_PATTERNS.md` for documented patterns from the source.
+New work is clearly marked — everything by Bob is Bob's, everything new is Nick's. The two are never confused.
 
-## Known Gaps
-
-- `Mix_FadeOutMusic` stops instead of fading; `Mix_HookMusicFinished` unwired
-- Clock shows $0 but time/day captions missing during intro
-- v8830 data not yet integrated into runtime
-- Web build has issues (see web-build/README.md)
+See `BOB_PATTERNS.md` for documented patterns from the original source.
 
 ## License
 
-Original code by Robert Pelloni (2003-2009). Treated as freeware/abandonware for preservation purposes. This port is for personal/preservation use.
+Original code by Robert Pelloni (2003-2009). Treated as freeware/abandonware for preservation purposes. This continuation is a fan completion project.
