@@ -734,6 +734,24 @@ fprintf(stderr,"Display refresh %dHz, swap interval %d\n",display_refresh,swap_i
 			//driver batches irregularly and vsyncs get missed (8.3ms -> 16.7ms).
 			//glFlush submits without the full pipeline stall of glFinish.
 			glFlush();
+			//PORT: dummy 1x1 texture upload (mimics F3 overlay's glTexImage2D).
+			//The F3 text overlay uploads a texture every frame, which eliminates
+			//micro-hitches via the DMA transfer keeping the GPU memory subsystem
+			//active. This replicates that without the visible overlay.
+			{
+				static GLuint dummy_tex=0;
+				static const unsigned char white_px[4]={255,255,255,255};
+				if(dummy_tex==0)
+				{
+					glGenTextures(1,&dummy_tex);
+					glBindTexture(GL_TEXTURE_2D,dummy_tex);
+					glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+					glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+				}
+				else glBindTexture(GL_TEXTURE_2D,dummy_tex);
+				glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,1,1,0,GL_RGBA,GL_UNSIGNED_BYTE,white_px);
+				glBindTexture(GL_TEXTURE_2D,0);
+			}
 			SDL_GL_SwapWindow(window);
 			Uint64 st_t5 = SDL_GetPerformanceCounter();
 			st_vbl_ms+=(float)((st_t5-st_t4)*1000.0/(double)hires_ticks_per_second);
