@@ -521,15 +521,20 @@ void MINIMAP_draw()
 	int spr_after[4]={0,3,2,1};
 
 	//1:1 -- origin is Yuu's position minus half the box, pixel-exact
-	int ox=PLAYER_npc->MAP_x-(MINIMAP_PX/2);
-	int oy=PLAYER_npc->MAP_y-(MINIMAP_PX/2);
+	int ox=PLAYER_npc->MAP_x-(mm_res/2);
+	int oy=PLAYER_npc->MAP_y-(mm_res/2);
 
 	float px2u=0.25f; //units per physical px (fallback)
 	if(WINDOW_DRAWABLE_W>0)px2u=640.0f/(float)WINDOW_DRAWABLE_W;
-	float mm_box=128.0f; //fallback if drawable size unknown
-	if(WINDOW_DRAWABLE_W>0)mm_box=512.0f*640.0f/(float)WINDOW_DRAWABLE_W;
+	float mm_box=128.0f; //constant 20% of window width on any display
 	float mm_x=(float)MINIMAP_X;
 	float mm_y=480.0f-8.0f-mm_box;
+	//active raster resolution = physical px in the box (512 Retina, 256 non-Retina).
+	//1 texel = 1 world px = 1 physical px, always crisp 1:1.
+	int mm_res=512;
+	if(WINDOW_DRAWABLE_W>0)mm_res=(int)(mm_box*(float)WINDOW_DRAWABLE_W/640.0f+0.5f);
+	if(mm_res>MINIMAP_PX)mm_res=MINIMAP_PX;
+	if(mm_res<64)mm_res=64;
 
 	//clip everything to the box (GL coords are y-up)
 	if(WINDOW_DRAWABLE_W>0&&WINDOW_DRAWABLE_H>0)
@@ -562,12 +567,12 @@ void MINIMAP_draw()
 		//rasterize this bg layer; transparent -> alpha 0 (blending shows beneath).
 		//first pass is opaque dark slate so the box has a base.
 		int bx,by;
-		for(by=0;by<MINIMAP_PX;by++)
+		for(by=0;by<mm_res;by++)
 		{
 			int wy=oy+by;
 			int ty=wy>=0?wy/8:-1; //floor-divide: C truncates toward zero
 			int pyi=wy>=0?wy%8:-1;
-			for(bx=0;bx<MINIMAP_PX;bx++)
+			for(bx=0;bx<mm_res;bx++)
 			{
 				int wx=ox+bx;
 				int tx=wx>=0?wx/8:-1;
@@ -599,12 +604,12 @@ void MINIMAP_draw()
 
 		//1px light-grey border
 		int i;
-		for(i=0;i<MINIMAP_PX;i++)
+		for(i=0;i<mm_res;i++)
 		{
 			int t=i*4;
-			int b=((MINIMAP_PX-1)*MINIMAP_PX+i)*4;
+			int b=((mm_res-1)*MINIMAP_PX+i)*4;
 			int l=(i*MINIMAP_PX)*4;
-			int rr=(i*MINIMAP_PX+MINIMAP_PX-1)*4;
+			int rr=(i*MINIMAP_PX+mm_res-1)*4;
 			minimap_px[t+0]=160;minimap_px[t+1]=160;minimap_px[t+2]=160;minimap_px[t+3]=255;
 			minimap_px[b+0]=160;minimap_px[b+1]=160;minimap_px[b+2]=160;minimap_px[b+3]=255;
 			minimap_px[l+0]=160;minimap_px[l+1]=160;minimap_px[l+2]=160;minimap_px[l+3]=255;
@@ -612,11 +617,12 @@ void MINIMAP_draw()
 		}
 
 		glBindTexture(GL_TEXTURE_2D,minimap_tex_id);
-		glTexSubImage2D(GL_TEXTURE_2D,0,0,0,MINIMAP_PX,MINIMAP_PX,GL_RGBA,GL_UNSIGNED_BYTE,minimap_px);
+		glTexSubImage2D(GL_TEXTURE_2D,0,0,0,mm_res,mm_res,GL_RGBA,GL_UNSIGNED_BYTE,minimap_px);
 		glEnable(GL_TEXTURE_2D);
 
+		float mm_u=(float)mm_res/(float)MINIMAP_PX;
 		GLfloat box[]={mm_x,mm_y+mm_box,0,  mm_x+mm_box,mm_y+mm_box,0,     mm_x+mm_box,mm_y,0,   mm_x,mm_y,0};
-		GLfloat tex[]={0,1, 1,1, 1,0, 0,0};
+		GLfloat tex[]={0,1, mm_u,1, mm_u,1-mm_u, 0,1-mm_u};
 
 		glEnableClientState(GL_VERTEX_ARRAY);
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
