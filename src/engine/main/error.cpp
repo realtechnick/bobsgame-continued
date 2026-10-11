@@ -132,19 +132,6 @@ void draw_texture_struct(texture_STRUCT* PLAYER_TEXTURE, int x, int y)
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 
-	//NPC sprites at 1:1 physical px: people, cars, signs -- drawn from each NPC's
-	//current GPU texture, so walk animation matches the game. Yuu last (on top).
-	float px2u=0.25f; //units per physical px (fallback)
-	if(WINDOW_DRAWABLE_W>0)px2u=640.0f/(float)WINDOW_DRAWABLE_W;
-
-	NPC* npc;
-	for(npc=first_NPC;npc!=NULL;npc=npc->next)
-	{
-		if(npc==PLAYER_npc)continue;
-		MINIMAP_draw_npc(npc,ox,oy,px2u,mm_x,mm_y,mm_box);
-	}
-	MINIMAP_draw_npc(PLAYER_npc,ox,oy,px2u,mm_x,mm_y,mm_box);
-
 }
 
 
@@ -600,5 +587,19 @@ void MINIMAP_draw()
 
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+
+	//NPC sprites at 1:1 physical px: people, cars, signs -- drawn from each NPC's
+	//current frame in the preloaded texture cache, so walk animation matches
+	//the game. Yuu last (on top).
+	float px2u=0.25f; //units per physical px (fallback)
+	if(WINDOW_DRAWABLE_W>0)px2u=640.0f/(float)WINDOW_DRAWABLE_W;
+
+	NPC* npc;
+	for(npc=first_NPC;npc!=NULL;npc=npc->next)
+	{
+		if(npc==PLAYER_npc)continue;
+		MINIMAP_draw_npc(npc,ox,oy,px2u,mm_x,mm_y,mm_box);
+	}
+	MINIMAP_draw_npc(PLAYER_npc,ox,oy,px2u,mm_x,mm_y,mm_box);
 
 }
