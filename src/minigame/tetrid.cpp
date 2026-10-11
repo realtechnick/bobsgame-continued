@@ -1326,10 +1326,10 @@ void TETRID_init_playingfield_array()
 
 	if(easymode==1)
 	{
-		TETRID_extra_stage_level = 6;
-		TETRID_extra_extra_stage_level =  7;
-		TETRID_master_stage_level =  8;
-		TETRID_credits_level = 9;
+		TETRID_extra_stage_level = 3;//PORT: halved for easier win
+		TETRID_extra_extra_stage_level =  3;
+		TETRID_master_stage_level =  4;
+		TETRID_credits_level = 4;
 	}
 	else
 	{

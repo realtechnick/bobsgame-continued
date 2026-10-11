@@ -5,7 +5,7 @@
 //#include "game.h"
 
 
-int GAMESTATE= 1;//TOWN sandbox
+int GAMESTATE= 0;//PORT: INTRO for first-run builds (was 1=TOWN sandbox)
 
 int GLOBAL_debug_level_select=78;
 
