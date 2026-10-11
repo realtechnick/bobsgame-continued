@@ -54,8 +54,64 @@ void bobsgame_TOWNTacoBurger_Map_Run_Function(int MAP_just_loaded)
 		{
 			TEXT_set_sprite_window(0,fastfood1_npc,NULL);
 			TEXT_set_sprite_window(1,PLAYER_npc,NULL);
-			TEXT_window(""
-			);//TODO: buy ???
+			//CONTINUED (Nick): 3-round dialogue for the order-taker. New completion dialogue, not Bob-authored.
+			static int fastfood1_talks = 0;
+			if(fastfood1_talks==0)
+			{
+				TEXT_window(
+				"<0>Welcome to TacoBurger! What can I get for Yuu?<.>"
+				"<1>What's a TacoBurger?<.>"
+				"<0>It's our signature item.<.>"
+				"<1>Yeah, but what IS it?<.>"
+				"<0>It's a taco. And a burger. <DELAY30>At the same time.<.>"
+				"<1>How does that work?<.>"
+				"<0>Nobody knows. The recipe is a trade secret. The health inspector gave up.<.>"
+				"<1>...<.>"
+				"<0>So what'll it be?<.>"
+				"<1>Uh...<.>"
+				"<0>Great choice! That'll be ready never, because we don't have prices.<.>"
+				"<1>What?<.>"
+				"<0>*chuckle*<.>"
+				"I'm kidding. The register works fine. Everything is just... priceless."
+				);
+			}
+			else if(fastfood1_talks==1)
+			{
+				TEXT_window(
+				"<0>Back for more? The line misses Yuu.<.>"
+				"<1>There's no line.<.>"
+				"<0>There's always a line. It's just invisible right now. Very modern.<.>"
+				"<1>Can I actually order something?<.>"
+				"<0>Of course! What does Yuu want?<.>"
+				"<1>A TacoBurger.<.>"
+				"<0>Excellent. One TacoBurger.<.>"
+				"<DELAY30>...<.>"
+				"<0>Okay, now what does Yuu want to EAT?<.>"
+				"<1>What?<.>"
+				"<0>The TacoBurger is for display only. It's been there since 2009.<.>"
+				"<1>That's disgusting.<.>"
+				"<0>*chuckle*<.>"
+				"That's the spirit. For actual food, we have napkins."
+				);
+			}
+			else
+			{
+				TEXT_window(
+				"<0>Yuu wants to know the truth about TacoBurger?<.>"
+				"<1>Sure.<.>"
+				"<0>There are no tacos here. There never were.<.>"
+				"<1>But the sign--<.>"
+				"<0>The sign is aspirational.<.>"
+				"<1>And the burgers?<.>"
+				"<0>Also aspirational.<.>"
+				"<1>So what do you sell?<.>"
+				"<0>Hope. And napkins.<.>"
+				"<1>...<.>"
+				"<0>*chuckle*<.>"
+				"Mostly napkins. Would Yuu like a napkin? They're free. Everything else is also free, technically, since we can't charge Yuu."
+				);
+			}
+			if(fastfood1_talks<2)fastfood1_talks++;
 		}
 	}
 	static NPC* fastfood2_npc = NULL;
@@ -74,8 +130,57 @@ void bobsgame_TOWNTacoBurger_Map_Run_Function(int MAP_just_loaded)
 		{
 			TEXT_set_sprite_window(0,fastfood2_npc,NULL);
 			TEXT_set_sprite_window(1,PLAYER_npc,NULL);
-			TEXT_window(""
-			);//TODO: buy ???
+			//CONTINUED (Nick): 3-round dialogue for the order relayer. New completion dialogue, not Bob-authored.
+			static int fastfood2_talks = 0;
+			if(fastfood2_talks==0)
+			{
+				TEXT_window(
+				"<1>I'd like to place an order.<.>"
+				"<0>Certainly. What is Yuu placing?<.>"
+				"<1>A TacoBurger.<.>"
+				"<0>One TacoBurger. Got it.<.>"
+				"<DELAY30>*shouting*<.>"
+				"<0>ORDER IN! ONE TACOBURGER!<.>"
+				"<1>...<.>"
+				"<0><DELAY30>...<.>"
+				"<0>Okay. It's placed.<.>"
+				"<1>That's it?<.>"
+				"<0>That's the whole job. I place the order. Somewhere. Into the void.<.>"
+				"<1>Is there a kitchen?<.>"
+				"<0>There was. We don't talk about the kitchen."
+				);
+			}
+			else if(fastfood2_talks==1)
+			{
+				TEXT_window(
+				"<0>Another order? The void is getting full.<.>"
+				"<1>The void?<.>"
+				"<0>Where the orders go. I shout them into the back and they... go somewhere.<.>"
+				"<1>Has anyone ever gotten their food?<.>"
+				"<0>One man, in 2011. He ordered a water. We're still telling stories about him.<.>"
+				"<1>Did he get the water?<.>"
+				"<0>He got a cup. The water is... pending.<.>"
+				"<1>...<.>"
+				"<0>*chuckle*<.>"
+				"Don't worry. Yuu's order is in the void now. It's in good company."
+				);
+			}
+			else
+			{
+				TEXT_window(
+				"<0>Yuu keeps coming back. Yuu likes the void, huh?<.>"
+				"<1>What's actually back there?<.>"
+				"<0>Behind me?<.>"
+				"<1>Yeah.<.>"
+				"<0>A wall. Then another wall. Then a door marked KITCHEN that hasn't opened since the franchise agreement.<.>"
+				"<1>What's behind the door?<.>"
+				"<0>Nobody knows. Sometimes we hear sizzling. We choose to believe it's the grill and not... other sizzling.<.>"
+				"<1>...<.>"
+				"<0>*chuckle*<.>"
+				"Yuu's order is back there somewhere. With all the others. They're having a great time."
+				);
+			}
+			if(fastfood2_talks<2)fastfood2_talks++;
 		}
 	}
 	static NPC* fastfood3_npc = NULL;
@@ -94,8 +199,55 @@ void bobsgame_TOWNTacoBurger_Map_Run_Function(int MAP_just_loaded)
 		{
 			TEXT_set_sprite_window(0,fastfood3_npc,NULL);
 			TEXT_set_sprite_window(1,PLAYER_npc,NULL);
-			TEXT_window(""
-			);//TODO: buy ???
+			//CONTINUED (Nick): 3-round dialogue for the cashier. New completion dialogue, not Bob-authored.
+			static int fastfood3_talks = 0;
+			if(fastfood3_talks==0)
+			{
+				TEXT_window(
+				"<0>Hi! Welcome to TacoBurger! Would Yuu like to purchase some DELICIOUS TacoBurgers?!<.>"
+				"<1>Why are you shouting?<.>"
+				"<0>Corporate says enthusiasm is mandatory! <DELAY30>Please don't tell them I'm tired.<.>"
+				"<1>Uh... how much is a TacoBurger?<.>"
+				"<0>Great question! The price is... let me check... <DELAY30>...<.>"
+				"<0>We don't have prices! Isn't that exciting?! Everything is priceless!<.>"
+				"<1>So it's free?<.>"
+				"<0>Nothing is free! But nothing has a price! It's a paradox! Corporate loves paradoxes!<.>"
+				"<1>...<.>"
+				"<0>*chuckle*<.>"
+				"Would Yuu like to supersize that paradox?!"
+				);
+			}
+			else if(fastfood3_talks==1)
+			{
+				TEXT_window(
+				"<0>Welcome back! Ready to purchase more DELICIOUS TacoBurgers?!<.>"
+				"<1>Do you have anything besides TacoBurgers?<.>"
+				"<0>We have TacoBurger Jr.! TacoBurger Sr.! The Big TacoBurger! The TacoBurger McTacoBurger!<.>"
+				"<1>Those are all the same thing.<.>"
+				"<0>They are NOT! The Jr. is smaller! The Sr. is... also smaller, but with dignity!<.>"
+				"<1>What's the difference, really?<.>"
+				"<0>The box. The box is different. The box is delicious. Has Yuu tried eating the box?<.>"
+				"<1>No.<.>"
+				"<0>*chuckle*<.>"
+				"Most customers prefer the box. It's our best seller. Seven years running."
+				);
+			}
+			else
+			{
+				TEXT_window(
+				"<0>Yuu! My favorite non-paying customer!<.>"
+				"<1>I'm twelve. I don't have money.<.>"
+				"<0>Perfect! Then Yuu is our ideal demographic! No money, no expectations!<.>"
+				"<1>Can I just have a TacoBurger?<.>"
+				"<0>Of course! One DELICIOUS TacoBurger, coming right up!<.>"
+				"<DELAY30>...<.>"
+				"<0>Okay, it's coming. It's on its way. Any second now.<.>"
+				"<1>...<.>"
+				"<0>*chuckle*<.>"
+				"It's been any second now since 2009. But the enthusiasm? The enthusiasm is real. Thank Yuu for shopping at TacoBurger!"
+				);
+			}
+			if(fastfood3_talks<2)fastfood3_talks++;
 		}
 	}
 //TODO: brighter signs
