@@ -377,21 +377,20 @@ void DEBUG_draw_overlays()
 }
 
 //===========================================================================================================================
-// MINIMAP test -- CONTINUED (Nick), 2026-10-11 (v4).
-// 512x512 texels, 1 texel = 1 game px (full-res, no undersampling), drawn as a
-// 256x256-unit box in the bottom-left corner. On a Retina display each game px
-// is 2x2 physical px -- the same pixel quality as the gameplay, just smaller
-// (gameplay is 4x4 physical px per game px at 0.5 zoom). Covers 512x512 game px
-// centered on Yuu: much more visible than the game view itself.
+// MINIMAP test -- CONTINUED (Nick), 2026-10-11 (v5).
+// 512x512 texels, 1 texel = 1 game px (full-res, no undersampling), drawn at
+// exactly 512 physical px on a side (sized from WINDOW_DRAWABLE_W at draw time,
+// 256x256 points on 2x Retina) so every texel is 1x1 physical -- the same pixel
+// quality as the gameplay, just smaller. Covers 512x512 game px centered on Yuu.
 // All 4 bg layers composited back-to-front (3,0,2,1) with
 // HARDWARE_MAP_PALETTE_ENHANCED_RGB (time-of-day correct). At 1:1 no origin
 // quantization is needed: the map scrolls pixel-smooth and the white player
 // dot sits dead-center. Toggle with F4.
 //===========================================================================================================================
 #define MINIMAP_PX 512 //texture texels; 1 texel = 1 game px
-#define MINIMAP_DRAW 256 //on-screen units; 2x2 physical px per texel on Retina
 #define MINIMAP_X 8
-#define MINIMAP_Y (480-8-MINIMAP_DRAW)
+//on-screen box is sized at draw time: exactly 512 physical px on a side, so texels
+//are 1x1 physical (256x256 points on a 2x Retina display)
 
 int minimap_on=1;
 
@@ -498,12 +497,18 @@ void MINIMAP_draw()
 		glTexSubImage2D(GL_TEXTURE_2D,0,0,0,MINIMAP_PX,MINIMAP_PX,GL_RGBA,GL_UNSIGNED_BYTE,minimap_px);
 	}
 
-	//draw the 512-texel texture at MINIMAP_DRAW units (same quad pattern as
-	//draw_texture_struct, which always draws at texture size)
+	//draw the 512-texel texture at exactly 512 physical px on a side, so every
+	//texel is 1x1 physical (same quad pattern as draw_texture_struct, which
+	//always draws at texture size). 512 phys px = 256 points on 2x Retina.
+	float mm_box=256.0f; //fallback if drawable size unknown
+	if(WINDOW_DRAWABLE_W>0)mm_box=512.0f*640.0f/(float)WINDOW_DRAWABLE_W;
+	float mm_x=(float)MINIMAP_X;
+	float mm_y=480.0f-8.0f-mm_box;
+
 	glBindTexture(GL_TEXTURE_2D,minimap_tex_id);
 	glEnable(GL_TEXTURE_2D);
 
-	GLfloat box[] = {MINIMAP_X,MINIMAP_Y+MINIMAP_DRAW,0,  MINIMAP_X+MINIMAP_DRAW,MINIMAP_Y+MINIMAP_DRAW,0,     MINIMAP_X+MINIMAP_DRAW,MINIMAP_Y,0,   MINIMAP_X,MINIMAP_Y,0};
+	GLfloat box[] = {mm_x,mm_y+mm_box,0,  mm_x+mm_box,mm_y+mm_box,0,     mm_x+mm_box,mm_y,0,   mm_x,mm_y,0};
 	GLfloat tex[] = {0,1, 1,1, 1,0, 0,0};
 
 	glEnableClientState(GL_VERTEX_ARRAY);
