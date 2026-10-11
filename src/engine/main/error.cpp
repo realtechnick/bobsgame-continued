@@ -378,8 +378,9 @@ void DEBUG_draw_overlays()
 
 //===========================================================================================================================
 // MINIMAP test -- CONTINUED (Nick), 2026-10-11 (v2).
-// 128x128 box in the bottom-left corner at 0.25x (each minimap px = 4x4 game px,
-// so the box covers 512x512 game px). All 4 bg layers composited back-to-front
+// 128x128 box in the bottom-left corner at 0.25 game scale. The game draws
+// everything at 2x internally, so 0.25 game scale == 2 game px per minimap px
+// (the box covers 256x256 game px). All 4 bg layers composited back-to-front
 // exactly like the renderer (3,0,2,1), using HARDWARE_MAP_PALETTE_ENHANCED_RGB
 // so colors match the game's time-of-day. The origin is 4px-quantized so the map
 // scrolls in whole minimap px and the white player dot stays centered.
@@ -388,7 +389,7 @@ void DEBUG_draw_overlays()
 #define MINIMAP_PX 128
 #define MINIMAP_X 8
 #define MINIMAP_Y (480-8-128)
-#define MINIMAP_GPX 4 //game px per minimap px (0.25x)
+#define MINIMAP_GPX 2 //game px per minimap px (0.25 game scale; the game renders 2x internally)
 
 int minimap_on=1;
 
@@ -413,12 +414,12 @@ void MINIMAP_draw()
 	int li;
 	for(li=0;li<4;li++)if(mlayers[li]==NULL)return;
 
-	//origin in game px, floored to a MINIMAP_GPX multiple (>>2<<2 floors negatives too).
+	//origin in game px, floored to a MINIMAP_GPX multiple (>>1<<1 floors negatives too).
 	//The map then steps in whole minimap px and the dot below lands dead-center.
 	int qx=PLAYER_npc->MAP_x-(MINIMAP_PX/2)*MINIMAP_GPX;
 	int qy=PLAYER_npc->MAP_y-(MINIMAP_PX/2)*MINIMAP_GPX;
-	int ox=(qx>>2)<<2;
-	int oy=(qy>>2)<<2;
+	int ox=(qx>>1)<<1;
+	int oy=(qy>>1)<<1;
 
 	int bx,by;
 	for(by=0;by<MINIMAP_PX;by++)
@@ -455,7 +456,7 @@ void MINIMAP_draw()
 		}
 	}
 
-	//player dot: 3x3 white. (MAP_x-ox) is always in [256,259], so this is (64,64).
+	//player dot: 3x3 white. (MAP_x-ox) is always in [128,129], so this is (64,64).
 	int pdx=(PLAYER_npc->MAP_x-ox)/MINIMAP_GPX;
 	int pdy=(PLAYER_npc->MAP_y-oy)/MINIMAP_GPX;
 	int dx,dy;
