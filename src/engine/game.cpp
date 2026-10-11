@@ -447,7 +447,10 @@ void GAME_init()
 	HARDWARE_reload_bg_textures();
 
 	ZOOMlock=0;
-	ZOOMto=1.0f;
+	//CONTINUED (Nick): 0.5x is the default gameplay zoom (was 1.0x here, forcing
+	//a zoom-out keypress on every boot).
+	ZOOM=0.5f;
+	ZOOMto=0.5f;
 
 }
 

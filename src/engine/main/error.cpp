@@ -377,19 +377,21 @@ void DEBUG_draw_overlays()
 }
 
 //===========================================================================================================================
-// MINIMAP test -- CONTINUED (Nick), 2026-10-11 (v2).
-// 128x128 box in the bottom-left corner at 0.25 game scale. The game draws
-// everything at 2x internally, so 0.25 game scale == 2 game px per minimap px
-// (the box covers 256x256 game px). All 4 bg layers composited back-to-front
-// exactly like the renderer (3,0,2,1), using HARDWARE_MAP_PALETTE_ENHANCED_RGB
-// so colors match the game's time-of-day. The origin is 4px-quantized so the map
-// scrolls in whole minimap px and the white player dot stays centered.
-// Toggle with F4. Single-commit feature.
+// MINIMAP test -- CONTINUED (Nick), 2026-10-11 (v4).
+// 512x512 texels, 1 texel = 1 game px (full-res, no undersampling), drawn as a
+// 256x256-unit box in the bottom-left corner. On a Retina display each game px
+// is 2x2 physical px -- the same pixel quality as the gameplay, just smaller
+// (gameplay is 4x4 physical px per game px at 0.5 zoom). Covers 512x512 game px
+// centered on Yuu: much more visible than the game view itself.
+// All 4 bg layers composited back-to-front (3,0,2,1) with
+// HARDWARE_MAP_PALETTE_ENHANCED_RGB (time-of-day correct). At 1:1 no origin
+// quantization is needed: the map scrolls pixel-smooth and the white player
+// dot sits dead-center. Toggle with F4.
 //===========================================================================================================================
-#define MINIMAP_PX 128
+#define MINIMAP_PX 512 //texture texels; 1 texel = 1 game px
+#define MINIMAP_DRAW 256 //on-screen units; 2x2 physical px per texel on Retina
 #define MINIMAP_X 8
-#define MINIMAP_Y (480-8-128)
-#define MINIMAP_GPX 2 //game px per minimap px (0.25 game scale; the game renders 2x internally)
+#define MINIMAP_Y (480-8-MINIMAP_DRAW)
 
 int minimap_on=1;
 
@@ -414,22 +416,20 @@ void MINIMAP_draw()
 	int li;
 	for(li=0;li<4;li++)if(mlayers[li]==NULL)return;
 
-	//origin in game px, floored to a MINIMAP_GPX multiple (>>1<<1 floors negatives too).
-	//The map then steps in whole minimap px and the dot below lands dead-center.
-	int qx=PLAYER_npc->MAP_x-(MINIMAP_PX/2)*MINIMAP_GPX;
-	int qy=PLAYER_npc->MAP_y-(MINIMAP_PX/2)*MINIMAP_GPX;
-	int ox=(qx>>1)<<1;
-	int oy=(qy>>1)<<1;
+	//1:1 -- origin is Yuu's position minus half the box, pixel-exact. No quantization
+	//needed: at full res the map scrolls pixel-smooth and the dot lands dead-center.
+	int ox=PLAYER_npc->MAP_x-(MINIMAP_PX/2);
+	int oy=PLAYER_npc->MAP_y-(MINIMAP_PX/2);
 
 	int bx,by;
 	for(by=0;by<MINIMAP_PX;by++)
 	{
-		int wy=oy+by*MINIMAP_GPX;
+		int wy=oy+by;
 		int ty=wy>=0?wy/8:-1; //floor-divide: C truncates toward zero
 		int pyi=wy>=0?wy%8:-1;
 		for(bx=0;bx<MINIMAP_PX;bx++)
 		{
-			int wx=ox+bx*MINIMAP_GPX;
+			int wx=ox+bx;
 			int tx=wx>=0?wx/8:-1;
 			int pxi=wx>=0?wx%8:-1;
 			int o=(by*MINIMAP_PX+bx)*4;
@@ -456,9 +456,9 @@ void MINIMAP_draw()
 		}
 	}
 
-	//player dot: 3x3 white. (MAP_x-ox) is always in [128,129], so this is (64,64).
-	int pdx=(PLAYER_npc->MAP_x-ox)/MINIMAP_GPX;
-	int pdy=(PLAYER_npc->MAP_y-oy)/MINIMAP_GPX;
+	//player dot: 3x3 white, dead-center (256,256)
+	int pdx=(PLAYER_npc->MAP_x-ox);
+	int pdy=(PLAYER_npc->MAP_y-oy);
 	int dx,dy;
 	for(dy=-1;dy<=1;dy++)for(dx=-1;dx<=1;dx++)
 	{
@@ -498,11 +498,23 @@ void MINIMAP_draw()
 		glTexSubImage2D(GL_TEXTURE_2D,0,0,0,MINIMAP_PX,MINIMAP_PX,GL_RGBA,GL_UNSIGNED_BYTE,minimap_px);
 	}
 
-	//128 is power-of-two so the struct draw needs no padding fixup
-	texture_STRUCT mm;
-	mm.image_w=MINIMAP_PX;mm.image_h=MINIMAP_PX;
-	mm.texture_w=MINIMAP_PX;mm.texture_h=MINIMAP_PX;
-	mm.texture_id=minimap_tex_id;
-	draw_texture_struct(&mm,MINIMAP_X,MINIMAP_Y);
+	//draw the 512-texel texture at MINIMAP_DRAW units (same quad pattern as
+	//draw_texture_struct, which always draws at texture size)
+	glBindTexture(GL_TEXTURE_2D,minimap_tex_id);
+	glEnable(GL_TEXTURE_2D);
+
+	GLfloat box[] = {MINIMAP_X,MINIMAP_Y+MINIMAP_DRAW,0,  MINIMAP_X+MINIMAP_DRAW,MINIMAP_Y+MINIMAP_DRAW,0,     MINIMAP_X+MINIMAP_DRAW,MINIMAP_Y,0,   MINIMAP_X,MINIMAP_Y,0};
+	GLfloat tex[] = {0,1, 1,1, 1,0, 0,0};
+
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
+	glVertexPointer(3, GL_FLOAT, 0,box);
+	glTexCoordPointer(2, GL_FLOAT, 0, tex);
+
+	glDrawArrays(GL_TRIANGLE_FAN,0,4);
+
+	glDisableClientState(GL_VERTEX_ARRAY);
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 
 }
