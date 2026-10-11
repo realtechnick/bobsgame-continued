@@ -377,14 +377,15 @@ void DEBUG_draw_overlays()
 }
 
 //===========================================================================================================================
-// MINIMAP test -- CONTINUED (Nick), 2026-10-11 (v7).
+// MINIMAP test -- CONTINUED (Nick), 2026-10-11 (v8).
 // 512x512 texels, 1 texel = 1 game px (full-res, no undersampling), drawn at
 // 512 true physical px on a side: with the Retina backing store
 // (SDL_WINDOW_HIGH_PIXEL_DENSITY) every texel is native 1x1 physical. Covers
 // 512x512 game px centered on Yuu. All 4 bg layers composited back-to-front
-// (3,0,2,1) with HARDWARE_MAP_PALETTE_ENHANCED_RGB (time-of-day correct).
-// At 1:1 no origin quantization is needed: the map scrolls pixel-smooth and
-// the white player dot sits dead-center. Toggle with F4.
+// (3,0,2,1) with HARDWARE_MAP_PALETTE_ENHANCED_RGB (time-of-day correct),
+// plus NPC dots for the sprite layers: yellow = people, orange = cars,
+// cyan = signs, white = Yuu. At 1:1 no origin quantization is needed: the map
+// scrolls pixel-smooth and dots sit at exact world positions. Toggle with F4.
 //===========================================================================================================================
 #define MINIMAP_PX 512 //texture texels; 1 texel = 1 game px
 #define MINIMAP_X 8
@@ -451,6 +452,44 @@ void MINIMAP_draw()
 			minimap_px[o+1]=g;
 			minimap_px[o+2]=b;
 			minimap_px[o+3]=255;
+		}
+	}
+
+	//NPC dots: the "sprite layers" of the world -- people, cars, signs.
+	//yellow = people, orange = cars, cyan = signs. Player keeps the white dot.
+	NPC* npc;
+	for(npc=first_NPC;npc!=NULL;npc=npc->next)
+	{
+		if(npc==PLAYER_npc)continue;
+		if(!npc->visible)continue;
+		int nx=npc->MAP_x-ox;
+		int ny=npc->MAP_y-oy;
+		if(nx<0||ny<0||nx>=MINIMAP_PX||ny>=MINIMAP_PX)continue;
+		unsigned char r=255,g=255,b=0; //yellow: people
+		if(npc->gfx!=NULL)
+		{
+			if(npc->gfx->car){r=255;g=128;b=0;} //orange: cars
+			else
+			{
+				char* fn=npc->gfx->FileName;
+				int fi;
+				for(fi=0;fn[fi]!=0;fi++)
+				if((fn[fi]=='s'||fn[fi]=='S')&&
+				   (fn[fi+1]=='i'||fn[fi+1]=='I')&&
+				   (fn[fi+2]=='g'||fn[fi+2]=='G')&&
+				   (fn[fi+3]=='n'||fn[fi+3]=='N'))
+				{r=0;g=255;b=255;break;} //cyan: signs
+			}
+		}
+		int dx,dy;
+		for(dy=-1;dy<=1;dy++)for(dx=-1;dx<=1;dx++)
+		{
+			int x=nx+dx,y=ny+dy;
+			if(x>=1&&y>=1&&x<MINIMAP_PX-1&&y<MINIMAP_PX-1)
+			{
+				int o=(y*MINIMAP_PX+x)*4;
+				minimap_px[o+0]=r;minimap_px[o+1]=g;minimap_px[o+2]=b;
+			}
 		}
 	}
 
