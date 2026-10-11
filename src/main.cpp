@@ -656,11 +656,30 @@ fprintf(stderr,"Display refresh %dHz, swap interval %d\n",display_refresh,swap_i
 			Uint64 st_t0 = SDL_GetPerformanceCounter();
 			float st_logic_ms=0.0f, st_vbl_ms=0.0f, st_wait_ms=0.0f;
 			static float present_accum=0.0f;
+			//PORT: adaptive presents_per_tick. SDL may report 60Hz on ProMotion
+			//even when vsync runs at 120Hz. Measure actual swap intervals and
+			//set presents_per_tick accordingly (2.0 for 120Hz, 1.0 for 60Hz).
+			static float adaptive_ppt=0.0f;
+			static Uint64 last_swap_t=0;
+			static float interval_avg_ms=16.6f;
+			{
+				Uint64 now=SDL_GetPerformanceCounter();
+				if(last_swap_t!=0)
+				{
+					float interval_ms=((float)(now-last_swap_t)*1000.0f)/(float)SDL_GetPerformanceFrequency();
+					//exponential moving average
+					interval_avg_ms=interval_avg_ms*0.95f+interval_ms*0.05f;
+					if(interval_avg_ms<12.0f)adaptive_ppt=2.0f;
+					else adaptive_ppt=1.0f;
+				}
+				last_swap_t=now;
+			}
+			if(adaptive_ppt==0.0f)adaptive_ppt=presents_per_tick; //first frame: use SDL value
 			present_accum+=1.0f;
 			Uint64 st_t1 = SDL_GetPerformanceCounter();
-			if(present_accum>=presents_per_tick)
+			if(present_accum>=adaptive_ppt)
 			{
-				present_accum-=presents_per_tick;
+				present_accum-=adaptive_ppt;
 				// PORT: wobble test — GAME_main() picks substeps/frame by movement:
 				// run 20 (5.0px cardinal / 4.0px diagonal, Bob's original run speeds),
 				// walk-diagonal 20 (2.0px), walk-cardinal 21 (3.0px); see the PORT
