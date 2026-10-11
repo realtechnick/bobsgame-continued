@@ -60,6 +60,10 @@ DEBUG_overlay_STRUCT* DEBUG_make_overlay(const char* text, int x, int y);
 void DEBUG_update_overlay(DEBUG_overlay_STRUCT* overlay, const char* text, int, int);
 void DEBUG_draw_overlays();
 
+//CONTINUED (Nick): minimap test -- 1x map box, bottom-left, follows Yuu. F4 toggles.
+extern int minimap_on;
+void MINIMAP_draw();
+
 void ERROR_check_SDL_and_GL_errors(const char* error_string);
 void gl_check_errors(int val);
 void error_console(const char* error_string);

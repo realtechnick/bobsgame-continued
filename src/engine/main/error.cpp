@@ -372,4 +372,117 @@ void DEBUG_draw_overlays()
 		}
 	}
 
+	MINIMAP_draw();
+
+}
+
+//===========================================================================================================================
+// MINIMAP test -- CONTINUED (Nick), 2026-10-11.
+// 128x128 box in the bottom-left corner showing map layer 1 rasterized at 1x
+// (native tile pixels, ignoring the game's zoom), centered on Yuu's world position,
+// with a white player dot. Toggle with F4. Single-commit feature.
+//===========================================================================================================================
+#define MINIMAP_PX 128
+#define MINIMAP_X 8
+#define MINIMAP_Y (480-8-128)
+
+int minimap_on=1;
+
+static GLuint minimap_tex_id=0;
+static unsigned char minimap_px[MINIMAP_PX*MINIMAP_PX*4];
+
+void MINIMAP_draw()
+{//===========================================================================================================================
+	if(minimap_on==0)return;
+	if(PLAYER_npc==NULL)return;
+	if(HARDWARE_map_1==NULL||HARDWARE_map_tileset==NULL||HARDWARE_map_palette==NULL)return;
+	int mw=HARDWARE_map_width_tiles;
+	int mh=HARDWARE_map_height_tiles;
+	if(mw<=0||mh<=0)return;
+
+	int ptx=PLAYER_npc->MAP_x/8;
+	int pty=PLAYER_npc->MAP_y/8;
+	int tx0=ptx-8; //16x16 tiles at 1x == 128px, centered on Yuu
+	int ty0=pty-8;
+
+	int bx,by;
+	for(by=0;by<MINIMAP_PX;by++)
+	{
+		int wy=ty0*8+by;
+		int ty=wy>=0?wy/8:-1; //floor-divide: C truncates toward zero
+		for(bx=0;bx<MINIMAP_PX;bx++)
+		{
+			int wx=tx0*8+bx;
+			int tx=wx>=0?wx/8:-1;
+			int o=(by*MINIMAP_PX+bx)*4;
+			unsigned char r=14,g=18,b=28; //out-of-map background: dark slate
+			if(tx>=0&&ty>=0&&tx<mw&&ty<mh)
+			{
+				int tile=HARDWARE_map_1[tx+ty*mw];
+				int pi=HARDWARE_map_tileset[64*tile+(wx%8)+(wy%8)*8];
+				if(pi==0){r=10;g=12;b=20;} //transparent tile: darker
+				else
+				{
+					int pal=HARDWARE_map_palette[pi]; //RGB555, same as AUX map raster
+					r=(pal%32)*8;
+					g=((pal/32)%32)*8;
+					b=(((pal/32)/32)%32)*8;
+				}
+			}
+			minimap_px[o+0]=r;
+			minimap_px[o+1]=g;
+			minimap_px[o+2]=b;
+			minimap_px[o+3]=255;
+		}
+	}
+
+	//player dot: 3x3 white at Yuu's exact position in the box
+	int pdx=PLAYER_npc->MAP_x-tx0*8;
+	int pdy=PLAYER_npc->MAP_y-ty0*8;
+	int dx,dy;
+	for(dy=-1;dy<=1;dy++)for(dx=-1;dx<=1;dx++)
+	{
+		int x=pdx+dx,y=pdy+dy;
+		if(x>=1&&y>=1&&x<MINIMAP_PX-1&&y<MINIMAP_PX-1)
+		{
+			int o=(y*MINIMAP_PX+x)*4;
+			minimap_px[o+0]=255;minimap_px[o+1]=255;minimap_px[o+2]=255;
+		}
+	}
+
+	//1px light-grey border
+	int i;
+	for(i=0;i<MINIMAP_PX;i++)
+	{
+		int t=i*4;
+		int b=((MINIMAP_PX-1)*MINIMAP_PX+i)*4;
+		int l=(i*MINIMAP_PX)*4;
+		int rr=(i*MINIMAP_PX+MINIMAP_PX-1)*4;
+		minimap_px[t+0]=160;minimap_px[t+1]=160;minimap_px[t+2]=160;
+		minimap_px[b+0]=160;minimap_px[b+1]=160;minimap_px[b+2]=160;
+		minimap_px[l+0]=160;minimap_px[l+1]=160;minimap_px[l+2]=160;
+		minimap_px[rr+0]=160;minimap_px[rr+1]=160;minimap_px[rr+2]=160;
+	}
+
+	if(minimap_tex_id==0)
+	{
+		glGenTextures(1,&minimap_tex_id);
+		glBindTexture(GL_TEXTURE_2D,minimap_tex_id);
+		glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,MINIMAP_PX,MINIMAP_PX,0,GL_RGBA,GL_UNSIGNED_BYTE,minimap_px);
+		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+	}
+	else
+	{
+		glBindTexture(GL_TEXTURE_2D,minimap_tex_id);
+		glTexSubImage2D(GL_TEXTURE_2D,0,0,0,MINIMAP_PX,MINIMAP_PX,GL_RGBA,GL_UNSIGNED_BYTE,minimap_px);
+	}
+
+	//128 is power-of-two so the struct draw needs no padding fixup
+	texture_STRUCT mm;
+	mm.image_w=MINIMAP_PX;mm.image_h=MINIMAP_PX;
+	mm.texture_w=MINIMAP_PX;mm.texture_h=MINIMAP_PX;
+	mm.texture_id=minimap_tex_id;
+	draw_texture_struct(&mm,MINIMAP_X,MINIMAP_Y);
+
 }
