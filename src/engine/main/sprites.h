@@ -99,6 +99,7 @@
 extern unsigned short* GAME_original_SPRITE_PALETTE;
 extern unsigned short GAME_temp_SPRITE_PALETTE[256];
 extern SPRITE* HARDWARE_sprites[256];
+extern GLuint GLTex_preloaded_sprite_textures[1024*8*8]; //preloaded sprite frame textures, 64 per GFX
 
 
 

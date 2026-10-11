@@ -132,6 +132,19 @@ void draw_texture_struct(texture_STRUCT* PLAYER_TEXTURE, int x, int y)
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 
+	//NPC sprites at 1:1 physical px: people, cars, signs -- drawn from each NPC's
+	//current GPU texture, so walk animation matches the game. Yuu last (on top).
+	float px2u=0.25f; //units per physical px (fallback)
+	if(WINDOW_DRAWABLE_W>0)px2u=640.0f/(float)WINDOW_DRAWABLE_W;
+
+	NPC* npc;
+	for(npc=first_NPC;npc!=NULL;npc=npc->next)
+	{
+		if(npc==PLAYER_npc)continue;
+		MINIMAP_draw_npc(npc,ox,oy,px2u,mm_x,mm_y,mm_box);
+	}
+	MINIMAP_draw_npc(PLAYER_npc,ox,oy,px2u,mm_x,mm_y,mm_box);
+
 }
 
 
@@ -377,15 +390,14 @@ void DEBUG_draw_overlays()
 }
 
 //===========================================================================================================================
-// MINIMAP test -- CONTINUED (Nick), 2026-10-11 (v8).
+// MINIMAP test -- CONTINUED (Nick), 2026-10-11 (v9).
 // 512x512 texels, 1 texel = 1 game px (full-res, no undersampling), drawn at
 // 512 true physical px on a side: with the Retina backing store
 // (SDL_WINDOW_HIGH_PIXEL_DENSITY) every texel is native 1x1 physical. Covers
 // 512x512 game px centered on Yuu. All 4 bg layers composited back-to-front
-// (3,0,2,1) with HARDWARE_MAP_PALETTE_ENHANCED_RGB (time-of-day correct),
-// plus NPC dots for the sprite layers: yellow = people, orange = cars,
-// cyan = signs, white = Yuu. At 1:1 no origin quantization is needed: the map
-// scrolls pixel-smooth and dots sit at exact world positions. Toggle with F4.
+// (3,0,2,1) with HARDWARE_MAP_PALETTE_ENHANCED_RGB (time-of-day correct).
+// Sprites (people, cars, signs, Yuu himself) are drawn from each NPC's current
+// GPU texture at 1:1 physical px, so walk animation matches the game. Toggle F4.
 //===========================================================================================================================
 #define MINIMAP_PX 512 //texture texels; 1 texel = 1 game px
 #define MINIMAP_X 8
@@ -396,6 +408,86 @@ int minimap_on=1;
 
 static GLuint minimap_tex_id=0;
 static unsigned char minimap_px[MINIMAP_PX*MINIMAP_PX*4];
+
+//draw one NPC's current sprite frame onto the minimap at 1:1 physical px.
+//uses the preloaded frame texture cache directly (same lookup as
+//HARDWARE_update_sprite_texture), so it's always the current animation frame
+//and immune to the per-frame sprite create/delete cycle.
+//falls back to a yellow dot if the frame texture isn't available.
+static void MINIMAP_draw_npc(NPC* npc, int ox, int oy, float px2u, float bx0, float by0, float bsz)
+{
+	if(npc==NULL||!npc->visible)return;
+	if(npc->gfx==NULL)return;
+	GFX* gfx=npc->gfx;
+
+	int nx=npc->MAP_x-ox;
+	int ny=npc->MAP_y-oy;
+
+	GLuint tex=0;
+	int sw=0,sh=0,tw=0,th=0;
+	int cache=gfx->IndexInCachedTextureIDArray;
+	int dsx=gfx->data_size_x, dsy=gfx->data_size_y;
+	if(cache>=0&&dsx>0&&dsy>0)
+	{
+		int frame=npc->gfx_index/(dsx*dsy);
+		if(frame>=0&&frame<64)
+		{
+			GLuint t=GLTex_preloaded_sprite_textures[cache*64+frame];
+			if(glIsTexture(t))
+			{
+				tex=t;
+				sw=dsx; sh=dsy; //native frame size
+				tw=gfx->texture_size_x; th=gfx->texture_size_y;
+			}
+		}
+	}
+
+	if(tex==0||sw<=0||sh<=0||tw<=0||th<=0)
+	{
+		//fallback: 3x3 physical px yellow square (plain GL, no texture)
+		if(nx<1||ny<1||nx>=MINIMAP_PX-1||ny>=MINIMAP_PX-1)return;
+		float dx=nx*px2u, dy=ny*px2u;
+		float dw=3.0f*px2u;
+		glDisable(GL_TEXTURE_2D);
+		glColor4f(1.0f,1.0f,0.0f,1.0f);
+		GLfloat box[]={bx0+dx,by0+dy,0,  bx0+dx,by0+dy+dw,0,  bx0+dx+dw,by0+dy+dw,0,  bx0+dx+dw,by0+dy,0};
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glVertexPointer(3,GL_FLOAT,0,box);
+		glDrawArrays(GL_TRIANGLE_FAN,0,4);
+		glDisableClientState(GL_VERTEX_ARRAY);
+		glColor4f(1.0f,1.0f,1.0f,1.0f);
+		return;
+	}
+
+	//cull outside the box (with sprite-size margin)
+	float mx=bx0+nx*px2u;
+	float my=by0+ny*px2u;
+	float mw=sw*px2u;
+	float mh=sh*px2u;
+	if(mx+mw<bx0||my+mh<by0||mx>bx0+bsz||my>by0+bsz)return;
+
+	//crisp 1:1 (draw_sprite resets the filter for the main view every frame,
+	//so borrowing NEAREST here is safe)
+	glBindTexture(GL_TEXTURE_2D,tex);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+	glEnable(GL_TEXTURE_2D);
+
+	//same subrect pattern as draw_texture_alpha: frame lives at UV (0,0)-(sw/tw,sh/th)
+	float tx=(float)sw/(float)tw;
+	float ty=(float)sh/(float)th;
+
+	GLfloat box[]={mx,my,0,  mx,my+mh,0,  mx+mw,my+mh,0,  mx+mw,my,0};
+	GLfloat texc[]={0,0,  0,ty,  tx,ty,  tx,0};
+
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	glVertexPointer(3,GL_FLOAT,0,box);
+	glTexCoordPointer(2,GL_FLOAT,0,texc);
+	glDrawArrays(GL_TRIANGLE_FAN,0,4);
+	glDisableClientState(GL_VERTEX_ARRAY);
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+}
 
 void MINIMAP_draw()
 {//===========================================================================================================================
@@ -452,58 +544,6 @@ void MINIMAP_draw()
 			minimap_px[o+1]=g;
 			minimap_px[o+2]=b;
 			minimap_px[o+3]=255;
-		}
-	}
-
-	//NPC dots: the "sprite layers" of the world -- people, cars, signs.
-	//yellow = people, orange = cars, cyan = signs. Player keeps the white dot.
-	NPC* npc;
-	for(npc=first_NPC;npc!=NULL;npc=npc->next)
-	{
-		if(npc==PLAYER_npc)continue;
-		if(!npc->visible)continue;
-		int nx=npc->MAP_x-ox;
-		int ny=npc->MAP_y-oy;
-		if(nx<0||ny<0||nx>=MINIMAP_PX||ny>=MINIMAP_PX)continue;
-		unsigned char r=255,g=255,b=0; //yellow: people
-		if(npc->gfx!=NULL)
-		{
-			if(npc->gfx->car){r=255;g=128;b=0;} //orange: cars
-			else
-			{
-				char* fn=npc->gfx->FileName;
-				int fi;
-				for(fi=0;fn[fi]!=0;fi++)
-				if((fn[fi]=='s'||fn[fi]=='S')&&
-				   (fn[fi+1]=='i'||fn[fi+1]=='I')&&
-				   (fn[fi+2]=='g'||fn[fi+2]=='G')&&
-				   (fn[fi+3]=='n'||fn[fi+3]=='N'))
-				{r=0;g=255;b=255;break;} //cyan: signs
-			}
-		}
-		int dx,dy;
-		for(dy=-1;dy<=1;dy++)for(dx=-1;dx<=1;dx++)
-		{
-			int x=nx+dx,y=ny+dy;
-			if(x>=1&&y>=1&&x<MINIMAP_PX-1&&y<MINIMAP_PX-1)
-			{
-				int o=(y*MINIMAP_PX+x)*4;
-				minimap_px[o+0]=r;minimap_px[o+1]=g;minimap_px[o+2]=b;
-			}
-		}
-	}
-
-	//player dot: 3x3 white, dead-center (256,256)
-	int pdx=(PLAYER_npc->MAP_x-ox);
-	int pdy=(PLAYER_npc->MAP_y-oy);
-	int dx,dy;
-	for(dy=-1;dy<=1;dy++)for(dx=-1;dx<=1;dx++)
-	{
-		int x=pdx+dx,y=pdy+dy;
-		if(x>=1&&y>=1&&x<MINIMAP_PX-1&&y<MINIMAP_PX-1)
-		{
-			int o=(y*MINIMAP_PX+x)*4;
-			minimap_px[o+0]=255;minimap_px[o+1]=255;minimap_px[o+2]=255;
 		}
 	}
 
