@@ -65,6 +65,7 @@ void HARDWARE_reload_bg_textures();
 
 
 void HARDWARE_load_metatile(int bg_layer, int MAP_width_pixels, int MAP_height_pixels, int clipx, int clipy, char* name);
+extern unsigned short HARDWARE_MAP_PALETTE_ENHANCED_RGB[256*3]; //time-of-day adjusted bg palette (8-bit RGB triplets)
 void HARDWARE_load_map(int bg_layer, void* MAP_data, int width, int height);
 void create_needed_metatiles(int bg);
 void delete_all_metatiles();

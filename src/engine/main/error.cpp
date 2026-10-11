@@ -377,14 +377,18 @@ void DEBUG_draw_overlays()
 }
 
 //===========================================================================================================================
-// MINIMAP test -- CONTINUED (Nick), 2026-10-11.
-// 128x128 box in the bottom-left corner showing map layer 1 rasterized at 1x
-// (native tile pixels, ignoring the game's zoom), centered on Yuu's world position,
-// with a white player dot. Toggle with F4. Single-commit feature.
+// MINIMAP test -- CONTINUED (Nick), 2026-10-11 (v2).
+// 128x128 box in the bottom-left corner at 0.25x (each minimap px = 4x4 game px,
+// so the box covers 512x512 game px). All 4 bg layers composited back-to-front
+// exactly like the renderer (3,0,2,1), using HARDWARE_MAP_PALETTE_ENHANCED_RGB
+// so colors match the game's time-of-day. The origin is 4px-quantized so the map
+// scrolls in whole minimap px and the white player dot stays centered.
+// Toggle with F4. Single-commit feature.
 //===========================================================================================================================
 #define MINIMAP_PX 128
 #define MINIMAP_X 8
 #define MINIMAP_Y (480-8-128)
+#define MINIMAP_GPX 4 //game px per minimap px (0.25x)
 
 int minimap_on=1;
 
@@ -395,38 +399,53 @@ void MINIMAP_draw()
 {//===========================================================================================================================
 	if(minimap_on==0)return;
 	if(PLAYER_npc==NULL)return;
-	if(HARDWARE_map_1==NULL||HARDWARE_map_tileset==NULL||HARDWARE_map_palette==NULL)return;
+	if(HARDWARE_map_tileset==NULL)return;
 	int mw=HARDWARE_map_width_tiles;
 	int mh=HARDWARE_map_height_tiles;
 	if(mw<=0||mh<=0)return;
 
-	int ptx=PLAYER_npc->MAP_x/8;
-	int pty=PLAYER_npc->MAP_y/8;
-	int tx0=ptx-8; //16x16 tiles at 1x == 128px, centered on Yuu
-	int ty0=pty-8;
+	//bg layers back-to-front, same order the renderer draws them
+	unsigned short* mlayers[4];
+	mlayers[0]=HARDWARE_map_3;
+	mlayers[1]=HARDWARE_map_0;
+	mlayers[2]=HARDWARE_map_2;
+	mlayers[3]=HARDWARE_map_1;
+	int li;
+	for(li=0;li<4;li++)if(mlayers[li]==NULL)return;
+
+	//origin in game px, floored to a MINIMAP_GPX multiple (>>2<<2 floors negatives too).
+	//The map then steps in whole minimap px and the dot below lands dead-center.
+	int qx=PLAYER_npc->MAP_x-(MINIMAP_PX/2)*MINIMAP_GPX;
+	int qy=PLAYER_npc->MAP_y-(MINIMAP_PX/2)*MINIMAP_GPX;
+	int ox=(qx>>2)<<2;
+	int oy=(qy>>2)<<2;
 
 	int bx,by;
 	for(by=0;by<MINIMAP_PX;by++)
 	{
-		int wy=ty0*8+by;
+		int wy=oy+by*MINIMAP_GPX;
 		int ty=wy>=0?wy/8:-1; //floor-divide: C truncates toward zero
+		int pyi=wy>=0?wy%8:-1;
 		for(bx=0;bx<MINIMAP_PX;bx++)
 		{
-			int wx=tx0*8+bx;
+			int wx=ox+bx*MINIMAP_GPX;
 			int tx=wx>=0?wx/8:-1;
+			int pxi=wx>=0?wx%8:-1;
 			int o=(by*MINIMAP_PX+bx)*4;
-			unsigned char r=14,g=18,b=28; //out-of-map background: dark slate
+			unsigned char r=14,g=18,b=28; //out-of-map: dark slate
 			if(tx>=0&&ty>=0&&tx<mw&&ty<mh)
 			{
-				int tile=HARDWARE_map_1[tx+ty*mw];
-				int pi=HARDWARE_map_tileset[64*tile+(wx%8)+(wy%8)*8];
-				if(pi==0){r=10;g=12;b=20;} //transparent tile: darker
-				else
+				int tii=pxi+pyi*8; //pixel index inside the 8x8 tile
+				for(li=0;li<4;li++)
 				{
-					int pal=HARDWARE_map_palette[pi]; //RGB555, same as AUX map raster
-					r=(pal%32)*8;
-					g=((pal/32)%32)*8;
-					b=(((pal/32)/32)%32)*8;
+					int tile=mlayers[li][tx+ty*mw];
+					int pi=HARDWARE_map_tileset[64*tile+tii];
+					if(pi!=0) //transparent pixels show the layer beneath
+					{
+						r=HARDWARE_MAP_PALETTE_ENHANCED_RGB[3*pi+0];
+						g=HARDWARE_MAP_PALETTE_ENHANCED_RGB[3*pi+1];
+						b=HARDWARE_MAP_PALETTE_ENHANCED_RGB[3*pi+2];
+					}
 				}
 			}
 			minimap_px[o+0]=r;
@@ -436,9 +455,9 @@ void MINIMAP_draw()
 		}
 	}
 
-	//player dot: 3x3 white at Yuu's exact position in the box
-	int pdx=PLAYER_npc->MAP_x-tx0*8;
-	int pdy=PLAYER_npc->MAP_y-ty0*8;
+	//player dot: 3x3 white. (MAP_x-ox) is always in [256,259], so this is (64,64).
+	int pdx=(PLAYER_npc->MAP_x-ox)/MINIMAP_GPX;
+	int pdy=(PLAYER_npc->MAP_y-oy)/MINIMAP_GPX;
 	int dx,dy;
 	for(dy=-1;dy<=1;dy++)for(dx=-1;dx<=1;dx++)
 	{
