@@ -717,11 +717,6 @@ fprintf(stderr,"Display refresh %dHz, swap interval %d\n",display_refresh,swap_i
 			}
 			Uint64 st_t4 = SDL_GetPerformanceCounter();
 			render();
-			//PORT: GPU sync (replicates F3 overlay's glTexImage2D sync). Without
-			//this, the CPU outruns the GPU, causing pipeline bubbles and stutter.
-			//The F3 text overlay uploads a texture every frame, which forces
-			//CPU-GPU lockstep; this glFinish does the same without the overlay.
-			glFinish();
 			SDL_GL_SwapWindow(window);
 			Uint64 st_t5 = SDL_GetPerformanceCounter();
 			st_vbl_ms+=(float)((st_t5-st_t4)*1000.0/(double)hires_ticks_per_second);
