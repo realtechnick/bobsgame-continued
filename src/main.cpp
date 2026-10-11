@@ -677,6 +677,7 @@ fprintf(stderr,"Display refresh %dHz, swap interval %d\n",display_refresh,swap_i
 			static float adaptive_ppt=0.0f;
 			static Uint64 last_swap_t=0;
 			static float interval_avg_ms=16.6f;
+			static int vsync_reapply_counter=0;
 			{
 				Uint64 now=SDL_GetPerformanceCounter();
 				if(last_swap_t!=0)
@@ -688,6 +689,17 @@ fprintf(stderr,"Display refresh %dHz, swap interval %d\n",display_refresh,swap_i
 					else adaptive_ppt=1.0f;
 				}
 				last_swap_t=now;
+				//PORT: re-apply native vsync periodically (every ~5 sec). If the
+				//display mode changes after startup (e.g. 120Hz->60Hz), the
+				//NSOpenGLContext swap interval goes stale and vsync stops
+				//blocking. Re-setting it picks up the new display timing.
+				if(++vsync_reapply_counter>=300)
+				{
+					vsync_reapply_counter=0;
+#ifdef __APPLE__
+					PORT_macos_set_native_swap_interval(1);
+#endif
+				}
 			}
 			if(adaptive_ppt==0.0f)adaptive_ppt=presents_per_tick; //first frame: use SDL value
 			present_accum+=1.0f;
