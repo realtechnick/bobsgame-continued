@@ -270,7 +270,9 @@ void bobsgame_TOWNDoctorsOfficeBackHall_Map_Run_Function(int MAP_just_loaded)
 	else if(receptionist2_npc!=NULL)
 	{
 		//CONTINUED (Nick): this nurse had no talk action at all. Giving her one + 3-round dialogue.
-		if(ACTION_range_xy_xy(20*8,15*8,24*8,18*8,"Talk To Nurse"))
+		//She stands behind the sealed counter (unreachable tiles), so the talk range sits on
+		//the player-accessible counter front at her height -- talk-across-the-counter, like the intake window.
+		if(ACTION_range_xy_xy(9*8,15*8,11*8,19*8,"Talk To Nurse"))
 		{
 			TEXT_set_sprite_window(0,receptionist2_npc,NULL);
 			TEXT_set_sprite_window(1,PLAYER_npc,NULL);
