@@ -520,6 +520,12 @@ void MINIMAP_draw()
 	int bg_order[4]={3,0,2,1};
 	int spr_after[4]={0,3,2,1};
 
+	//active raster resolution = physical px in the box (512 Retina, 256 non-Retina).
+	//1 texel = 1 world px = 1 physical px, always crisp 1:1.
+	int mm_res=512;
+	if(WINDOW_DRAWABLE_W>0)mm_res=(int)(128.0f*(float)WINDOW_DRAWABLE_W/640.0f+0.5f);
+	if(mm_res>MINIMAP_PX)mm_res=MINIMAP_PX;
+	if(mm_res<64)mm_res=64;
 	//1:1 -- origin is Yuu's position minus half the box, pixel-exact
 	int ox=PLAYER_npc->MAP_x-(mm_res/2);
 	int oy=PLAYER_npc->MAP_y-(mm_res/2);
@@ -529,12 +535,6 @@ void MINIMAP_draw()
 	float mm_box=128.0f; //constant 20% of window width on any display
 	float mm_x=(float)MINIMAP_X;
 	float mm_y=480.0f-8.0f-mm_box;
-	//active raster resolution = physical px in the box (512 Retina, 256 non-Retina).
-	//1 texel = 1 world px = 1 physical px, always crisp 1:1.
-	int mm_res=512;
-	if(WINDOW_DRAWABLE_W>0)mm_res=(int)(mm_box*(float)WINDOW_DRAWABLE_W/640.0f+0.5f);
-	if(mm_res>MINIMAP_PX)mm_res=MINIMAP_PX;
-	if(mm_res<64)mm_res=64;
 
 	//clip everything to the box (GL coords are y-up)
 	if(WINDOW_DRAWABLE_W>0&&WINDOW_DRAWABLE_H>0)
