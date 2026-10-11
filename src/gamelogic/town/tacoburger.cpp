@@ -50,10 +50,12 @@ void bobsgame_TOWNTacoBurger_Map_Run_Function(int MAP_just_loaded)
 	{
 		if(NPC_in_range_of_npc_by_amount(&PLAYER_npc,&fastfood1_npc,30))NPC_stare_at_npc(&fastfood1_npc,&PLAYER_npc);
 		else NPC_animate_stand_dir(&fastfood1_npc, DOWN);
-		if(ACTION_range_xy_xy(12*8,13*8,16*8,14*8,"Order TacoBurgers"))
+		if(ACTION_range_xy_xy(12*8,13*8,16*8,16*8,"Order TacoBurgers"))
 		{
 			TEXT_set_sprite_window(0,fastfood1_npc,NULL);
 			TEXT_set_sprite_window(1,PLAYER_npc,NULL);
+			//CONTINUED (Nick): talk range extended south across the counter (was y13-14, inside the
+			//counter wall -- unreachable). Player orders from y15, per Bob's own map comment.
 			//CONTINUED (Nick): 3-round dialogue for the order-taker. New completion dialogue, not Bob-authored.
 			static int fastfood1_talks = 0;
 			if(fastfood1_talks==0)
@@ -126,7 +128,7 @@ void bobsgame_TOWNTacoBurger_Map_Run_Function(int MAP_just_loaded)
 	{
 		if(NPC_in_range_of_npc_by_amount(&PLAYER_npc,&fastfood2_npc,30))NPC_stare_at_npc(&fastfood2_npc,&PLAYER_npc);
 		else NPC_animate_stand_dir(&fastfood2_npc, DOWN);
-		if(ACTION_range_xy_xy(20*8,13*8,24*8,14*8,"Place Order"))
+		if(ACTION_range_xy_xy(20*8,13*8,24*8,16*8,"Place Order"))
 		{
 			TEXT_set_sprite_window(0,fastfood2_npc,NULL);
 			TEXT_set_sprite_window(1,PLAYER_npc,NULL);
@@ -195,7 +197,7 @@ void bobsgame_TOWNTacoBurger_Map_Run_Function(int MAP_just_loaded)
 	{
 		if(NPC_in_range_of_npc_by_amount(&PLAYER_npc,&fastfood3_npc,30))NPC_stare_at_npc(&fastfood3_npc,&PLAYER_npc);
 		else NPC_animate_stand_dir(&fastfood3_npc, DOWN);
-		if(ACTION_range_xy_xy(27*8,13*8,31*8,14*8,"Purchase Delicious TacoBurgers"))
+		if(ACTION_range_xy_xy(27*8,13*8,31*8,16*8,"Purchase Delicious TacoBurgers"))
 		{
 			TEXT_set_sprite_window(0,fastfood3_npc,NULL);
 			TEXT_set_sprite_window(1,PLAYER_npc,NULL);
