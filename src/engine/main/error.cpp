@@ -617,7 +617,10 @@ void MINIMAP_draw()
 		}
 
 		glBindTexture(GL_TEXTURE_2D,minimap_tex_id);
+		//buffer rows are MINIMAP_PX wide; tell GL the stride so subrect uploads read correctly
+		glPixelStorei(GL_UNPACK_ROW_LENGTH,MINIMAP_PX);
 		glTexSubImage2D(GL_TEXTURE_2D,0,0,0,mm_res,mm_res,GL_RGBA,GL_UNSIGNED_BYTE,minimap_px);
+		glPixelStorei(GL_UNPACK_ROW_LENGTH,0);
 		glEnable(GL_TEXTURE_2D);
 
 		float mm_u=(float)mm_res/(float)MINIMAP_PX;
