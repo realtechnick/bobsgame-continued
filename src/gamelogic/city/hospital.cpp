@@ -88,8 +88,81 @@ void bobsgame_CITYHospitalEntrance_Map_Run_Function(int MAP_just_loaded)
 		{
 			TEXT_set_sprite_window(0,nurse1_npc,NULL);
 			TEXT_set_sprite_window(1,PLAYER_npc,NULL);
-			TEXT_window(""
-			);
+			//CONTINUED (Nick): 3-round triage dialogue for the hospital entrance nurse.
+			//New completion dialogue — not Bob-authored. Talk counter persists per session.
+			static int nurse1_talks = 0;
+			if(nurse1_talks==0)
+			{
+				TEXT_window(
+"Welcome to St. Somebody's Emergency Room.<.>"
+				"<1>Uh, hi. I'm not actually hurt or anything.<.>"
+				"<0>Then why is Yuu in the emergency room?<.>"
+				"<1>I'm just looking around.<.>"
+				"<0>*sigh*<.>"
+				"Name?<.>"
+				"<1>Yuu.<.>"
+				"<0>Yuu Yuu?<.>"
+				"<1>Just Yuu.<.>"
+				"<0>Fine. Insurance?<.>"
+				"<1>I'm twelve.<.>"
+				"<0>So that's a no. Next of kin?<.>"
+				"<1>Why do you need that?<.>"
+				"<0>In case the paperwork outlives Yuu. It usually does.<.>"
+				"*chuckle*<.>"
+				"Okay. What's the emergency?<.>"
+				"<1>There isn't one. I said I'm just looking around.<.>"
+				"<0>Oh good, a tourist.<.>"
+				"The gift shop is on the third floor. This is the emergency room. We only do emergencies here.<.>"
+				"<1>...<.>"
+				"<0>Take a number. Yuu's emergency will be processed in the order it was received."
+								);
+			}
+			else if(nurse1_talks==1)
+			{
+				TEXT_window(
+"<0>Oh, it's Yuu again. Back with another emergency?<.>"
+				"<1>No emergency. Still just looking.<.>"
+				"<0>Yuu knows most people lie about that, right?<.>"
+				"<1>About what?<.>"
+				"<0>About having an emergency. They come in here with a paper cut and expect the full red-carpet treatment.<.>"
+				"Meanwhile there's a man in bay three who's been waiting since Tuesday.<.>"
+				"<1>Since Tuesday?! What's wrong with him?<.>"
+				"<0>Nothing. He's the organ donor coordinator. He's just very dedicated.<.>"
+				"<1>...<.>"
+				"<0>Anyway. Triage category?<.>"
+				"<1>What?<.>"
+				"<0>Green, yellow, red, or black. Pick one.<.>"
+				"<1>Those sound like traffic lights.<.>"
+				"<0>They're not traffic lights, Yuu. This is a hospital. We take this very seriously.<.>"
+				"<1>Green, I guess?<.>"
+				"<0>Green means walk it off. Congratulations, Yuu has been treated.<.>"
+				"That will be $10,000. The doctor will see Yuu never."
+								);
+			}
+			else
+			{
+				TEXT_window(
+"<0>Yuu again.<.>"
+				"<1>Hi.<.>"
+				"<0>Yuu wants to know a secret about this emergency room?<.>"
+				"<1>Sure.<.>"
+				"<0>Nothing has ever been an emergency here.<.>"
+				"Not once. In eleven years.<.>"
+				"<1>That can't be true.<.>"
+				"<0>Oh, people come in screaming all the time. Emergency! Emergency!<.>"
+				"Then we do the paperwork, and it turns out it was just Tuesday again.<.>"
+				"<1>What's wrong with Tuesday?<.>"
+				"<0>Nothing. That's the problem. Nothing is ever wrong enough.<.>"
+				"The last real emergency was in 2015. A man swallowed his own wedding ring.<.>"
+				"<1>What happened to him?<.>"
+				"<0>He's the organ donor coordinator now. Bay three. Very dedicated.<.>"
+				"<1>...<.>"
+				"<0>*chuckle*<.>"
+				"Don't look so worried, Yuu. Yuu is young. Yuu has decades of non-emergencies ahead of Yuu.<.>"
+				"Now if Yuu will excuse me, I have to go not save a life."
+								);
+			}
+			if(nurse1_talks<2)nurse1_talks++;
 		}
 	}
 	static NPC* nurse2_npc = NULL;
