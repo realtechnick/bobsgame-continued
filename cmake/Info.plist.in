@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleIdentifier</key>
+	<string>com.realtechnick.bobsgame</string>
+	<key>CFBundleName</key>
+	<string>Bob's Game</string>
+	<key>CFBundleVersion</key>
+	<string>1.0</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.0</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleExecutable</key>
+	<string>bobsgame</string>
+	<!-- PORT: macOS Game Mode opt-in. When the game runs fullscreen from an
+	     app bundle containing this plist, macOS Sonoma+ automatically engages
+	     Game Mode: highest CPU/GPU priority for the game, suppressed background
+	     activity, reduced audio/Bluetooth latency. Requires fullscreen. -->
+	<key>GCSupportsGameMode</key>
+	<true/>
+</dict>
+</plist>

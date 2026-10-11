@@ -8,6 +8,9 @@
 //-----------------------------
 
 #include "main.h"
+#ifdef __APPLE__
+#include <pthread.h>
+#endif
 
 
 SDL_Window *window;
@@ -261,6 +264,18 @@ GLuint loadShaderFromFile( std::string path, GLenum shaderType )
 //==========================================================================================================================
 int main(int argc, char *argv[])//int argc, char **argv)
 {//==========================================================================================================================
+
+#ifdef __APPLE__
+	//PORT: macOS Game Mode CPU prioritization. Boost main thread to
+	//QOS_CLASS_USER_INTERACTIVE so the scheduler prioritizes the game
+	//thread (this is the CPU half of what Game Mode does; the full
+	//Game Mode also needs an app bundle with GCSupportsGameMode in
+	//Info.plist plus fullscreen, see cmake/Info.plist.in).
+	{
+		int qos_rc=pthread_set_qos_class_self_np(QOS_CLASS_USER_INTERACTIVE,0);
+		if(qos_rc==0)fprintf(stderr,"macOS thread QoS: USER_INTERACTIVE\n");
+	}
+#endif
 
 	//-----------------------------
 	//load ini file
