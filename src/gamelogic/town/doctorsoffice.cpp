@@ -47,8 +47,62 @@ void bobsgame_TOWNDoctorsOfficeEntrance_Map_Run_Function(int MAP_just_loaded)
 		{
 			TEXT_set_sprite_window(0,receptionist_npc,NULL);
 			TEXT_set_sprite_window(1,PLAYER_npc,NULL);
-			TEXT_window(""
-			);
+			//CONTINUED (Nick): 3-round appointment-desk dialogue for the entrance receptionist. New completion dialogue, not Bob-authored.
+			static int receptionist_talks = 0;
+			if(receptionist_talks==0)
+			{
+				TEXT_window(
+				"Welcome to Dr. Proctologist's office. Do Yuu have an appointment?<.>"
+				"<1>Uh, no. I just walked in.<.>"
+				"<0>*sigh*<.>"
+				"Name?<.>"
+				"<1>Yuu.<.>"
+				"<0>Reason for visit?<.>"
+				"<1>I'm just looking around.<.>"
+				"<0>That's not a medical reason, Yuu.<.>"
+				"<1>Isn't this a proctology place? I'm twelve.<.>"
+				"<0>And I'm the receptionist. We all have our crosses to bear.<.>"
+				"<1>...<.>"
+				"<0>The earliest appointment is Thursday.<.>"
+				"<1>This Thursday?<.>"
+				"<0>*chuckle*<.>"
+				"No."
+				);
+			}
+			else if(receptionist_talks==1)
+			{
+				TEXT_window(
+				"<0>Back again? Did Yuu lose Yuu's appointment?<.>"
+				"<1>I never had one.<.>"
+				"<0>Then Yuu is in the wrong line. The no-appointment line is outside.<.>"
+				"<1>There's no line outside.<.>"
+				"<0>Exactly. No demand.<.>"
+				"Now, would Yuu like to make an appointment?<.>"
+				"<1>Sure, I guess.<.>"
+				"<0>Wonderful. Let me check the book... it's completely full.<.>"
+				"<1>Completely?<.>"
+				"<0>Every page. Eleven years of appointments. The doctor is very popular.<.>"
+				"<1>Can I see the book?<.>"
+				"<0>Absolutely not. The book is for staff only. It contains... appointments."
+				);
+			}
+			else
+			{
+				TEXT_window(
+				"<0>Yuu wants to know something about the appointment book?<.>"
+				"<1>Not really.<.>"
+				"<0>Too bad. Nobody has ever kept an appointment here.<.>"
+				"<1>What?<.>"
+				"<0>They make the appointment, I write it in the book, and then they never come.<.>"
+				"Eleven years. Not one kept appointment.<.>"
+				"<1>Then why do you keep making them?<.>"
+				"<0>Because if I stop, they'll realize they don't need a receptionist.<.>"
+				"<1>...<.>"
+				"<0>*chuckle*<.>"
+				"Now. Would Yuu like to make an appointment? The book is hungry."
+				);
+			}
+			if(receptionist_talks<2)receptionist_talks++;
 		}
 	}
 
@@ -157,8 +211,52 @@ void bobsgame_TOWNDoctorsOfficeBackHall_Map_Run_Function(int MAP_just_loaded)
 		{
 			TEXT_set_sprite_window(0,receptionist_npc,NULL);
 			TEXT_set_sprite_window(1,PLAYER_npc,NULL);
-			TEXT_window(""
-			);
+			//CONTINUED (Nick): 3-round dialogue for the back-hall nurse. New completion dialogue, not Bob-authored.
+			static int backnurse_talks = 0;
+			if(backnurse_talks==0)
+			{
+				TEXT_window(
+				"<0>Hold it. This hallway is for staff. Patients stay up front.<.>"
+				"<1>I'm not a patient. I'm just looking around.<.>"
+				"<0>That's what the last health inspector said.<.>"
+				"<1>There was a health inspector?<.>"
+				"<0>Once. We don't talk about it.<.>"
+				"<1>...<.>"
+				"<0>Yuu doesn't look sick. Yuu looks like a kid who's somewhere he's not supposed to be.<.>"
+				"<1>I'm fine, really.<.>"
+				"<0>That's exactly what the sick ones say. The healthy ones just leave."
+				);
+			}
+			else if(backnurse_talks==1)
+			{
+				TEXT_window(
+				"<0>Yuu again. Still not a patient?<.>"
+				"<1>Still just looking.<.>"
+				"<0>Mm-hm. Yuu knows what's through that door, right?<.>"
+				"<1>The doctor's office?<.>"
+				"<0>The examination room. Table, stirrups, the big light.<.>"
+				"<1>What's it for?<.>"
+				"<0>Proctology.<.>"
+				"<1>I'm twelve.<.>"
+				"<0>And yet here Yuu is, in the hallway, asking questions. Curiosity is the first symptom."
+				);
+			}
+			else
+			{
+				TEXT_window(
+				"<0>Yuu wants the truth about this place?<.>"
+				"<1>Okay.<.>"
+				"<0>The doctor hasn't come out of that room in three days.<.>"
+				"<1>Is he okay?<.>"
+				"<0>He's in there with a patient. Has been since Tuesday.<.>"
+				"<1>Since Tuesday?!<.>"
+				"<0>The patient keeps saying just one more question. The doctor can't get a word in.<.>"
+				"<1>...<.>"
+				"<0>*chuckle*<.>"
+				"I'm only half joking. Go on, knock. See what happens."
+				);
+			}
+			if(backnurse_talks<2)backnurse_talks++;
 		}
 	}
 	static NPC* receptionist2_npc = NULL;
@@ -171,7 +269,59 @@ void bobsgame_TOWNDoctorsOfficeBackHall_Map_Run_Function(int MAP_just_loaded)
 	}
 	else if(receptionist2_npc!=NULL)
 	{
-
+		//CONTINUED (Nick): this nurse had no talk action at all. Giving her one + 3-round dialogue.
+		if(ACTION_range_xy_xy(20*8,15*8,24*8,18*8,"Talk To Nurse"))
+		{
+			TEXT_set_sprite_window(0,receptionist2_npc,NULL);
+			TEXT_set_sprite_window(1,PLAYER_npc,NULL);
+			//CONTINUED (Nick): 3-round dialogue for the second back-hall nurse. New completion dialogue, not Bob-authored.
+			static int receptionist2_talks = 0;
+			if(receptionist2_talks==0)
+			{
+				TEXT_window(
+				"<1>Hi.<.>"
+				"<0>Oh! Yuu startled me.<.>"
+				"<1>Sorry.<.>"
+				"<0>No, it's fine. I'm just... new. Well, new-ish. Eleven years new.<.>"
+				"<1>That's not new.<.>"
+				"<0>It is here. The other nurse has been here since the building was built.<.>"
+				"<1>How old is the building?<.>"
+				"<0>Older than the town. Don't ask."
+				);
+			}
+			else if(receptionist2_talks==1)
+			{
+				TEXT_window(
+				"<0>Yuu came back. Nobody comes back here twice.<.>"
+				"<1>Why not?<.>"
+				"<0>Because this hallway only goes to the examination room, and nobody wants to go in there twice.<.>"
+				"<1>What's wrong with it?<.>"
+				"<0>Have you met the doctor?<.>"
+				"<1>Not yet.<.>"
+				"<0>Keep it that way. He's very... thorough.<.>"
+				"<1>...<.>"
+				"<0>*chuckle*<.>"
+				"That will be $10,000."
+				);
+			}
+			else
+			{
+				TEXT_window(
+				"<0>Can I tell Yuu a secret?<.>"
+				"<1>Sure.<.>"
+				"<0>I was a patient once. Came in for a checkup.<.>"
+				"<1>And?<.>"
+				"<0>That was eleven years ago. I never left.<.>"
+				"<1>What?!<.>"
+				"<0>The benefits are great. The hours are terrible. The doctor is... thorough.<.>"
+				"<1>...<.>"
+				"<0>*chuckle*<.>"
+				"Don't look so scared, Yuu. Yuu can leave whenever Yuu wants.<.>"
+				"Probably."
+				);
+			}
+			if(receptionist2_talks<2)receptionist2_talks++;
+		}
 	}
 	if(walking_into_door(RANGE_TOWNDoctorsOfficeBackHallToDoctorsOfficeEntrance))
 	{
