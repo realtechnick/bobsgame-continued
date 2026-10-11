@@ -1,4 +1,5 @@
-> **Bob's Game — Continued.** This is the completion build: working toward a finished, fully playable game.
+> **Bob's Game — Continued.** The base 1:1 port is virtually complete — totally stable and playable.
+> Now we continue the work of completing the story, systems, features, and content of Bob's Game however we see fit.
 > Forked from [realtechnick/bobsgame-modern](https://github.com/realtechnick/bobsgame-modern) at tag `preservation/1.0` (commit `e4c99da`).
 > The upstream repo stays a pristine 1:1 preservation of Robert Pelloni's recovered source — all new content and design lives here.
 > **Authorship:** everything by Bob is Bob's. New dialogue, systems, and content are Nick's — never presented as Bob-authored.
