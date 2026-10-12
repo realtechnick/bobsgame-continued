@@ -495,10 +495,6 @@ void render()
 	//this is exactly 2.0 as before.
 	if(tempZOOM<1.0f)ZOOM=2.0f*tempZOOM;
 	else ZOOM=2.0f;
-	//CONTINUED: 0.75 -> 1.5x is fractional in the framebuffer (uneven pixels that
-	//the 4x blit then magnifies). Render at 1.0x instead; the blit scales the
-	//426x320 viewport 6x to 2560x1920, integer-clean.
-	if(tempZOOM>0.74f&&tempZOOM<0.76f)ZOOM=1.0f;
 	}
 
 	//confusingly, the game scales everything by 2x at ZOOM 1x. the internal game engine thinks it is running at half the rendered resolution.
