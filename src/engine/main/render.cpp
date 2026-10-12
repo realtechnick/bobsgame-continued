@@ -454,10 +454,9 @@ void render()
 	//PORT: at 0.25 the camera view (1280x960) matches the window: render directly
 	//at 1:1 for pixel-perfect sharpness instead of minifying into the 640x480
 	//FBO and upscaling (which throws away 3/4 of the pixels).
-	//CONTINUED: direct_1to1 disabled. It set a drawable-sized ortho but the game
-	//draws in 640-space, crushing 0.25 into half the ortho with black bars.
-	//The normal 0.5x path handles 0.25 correctly.
-	bool direct_1to1=false;
+	bool direct_1to1=(tempZOOM<0.5f&&
+		GAME_VIEWPORT_WIDTH_PIXELS==WINDOW_DRAWABLE_W&&
+		GAME_VIEWPORT_HEIGHT_PIXELS==WINDOW_DRAWABLE_H);
 
 	if(direct_1to1)
 	{
