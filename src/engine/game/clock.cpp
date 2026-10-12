@@ -159,14 +159,25 @@ void CLOCK_update_clock()
 void CLOCK_vbl()
 {//=========================================================================================================================
 
-	//CONTINUED: pin clock/day/money UI to constant 1.0 scale (don't zoom with world).
+	//CONTINUED: pin clock/day/money UI to constant 1.0-zoom size (don't zoom with world).
 	//Render zoom is 2.0*ZOOM for ZOOM<1 else 2.0; counteract it here.
+	//Force NEAREST on the caption textures: dynamic scale changes were
+	//leaving them in LINEAR filtering after a zoom.
 	{
 		float rz=(ZOOM<1.0f)?(2.0f*ZOOM):2.0f;
 		if(rz<0.01f)rz=1.0f;
-		if(timecaption!=NULL)timecaption->scale=2.0f/rz;
-		if(daycaption!=NULL)daycaption->scale=2.0f/rz;
-		if(moneycaption!=NULL)moneycaption->scale=2.0f/rz;
+		CAPTION* caps[3]={timecaption,daycaption,moneycaption};
+		for(int i=0;i<3;i++)if(caps[i]!=NULL)
+		{
+			caps[i]->scale=2.0f/rz;
+			for(int c=0;c<4;c++)if(caps[i]->sprite[c]!=NULL&&caps[i]->sprite[c]->texture_id!=0)
+			{
+				glBindTexture(GL_TEXTURE_2D,caps[i]->sprite[c]->texture_id);
+				glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+				glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+			}
+		}
+		glBindTexture(GL_TEXTURE_2D,0);
 	}
 
 	if(CLOCK_paused==0&&GLOBAL_text_engine_state==0)
