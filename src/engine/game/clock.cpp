@@ -159,9 +159,15 @@ void CLOCK_update_clock()
 void CLOCK_vbl()
 {//=========================================================================================================================
 
-	//if(timecaption!=NULL)timecaption->scale=2.0f/ZOOM;
-	//if(daycaption!=NULL)daycaption->scale=2.0f/ZOOM;
-	//if(moneycaption!=NULL)moneycaption->scale=2.0f/ZOOM;
+	//CONTINUED: pin clock/day/money UI to constant 1.0 scale (don't zoom with world).
+	//Render zoom is 2.0*ZOOM for ZOOM<1 else 2.0; counteract it here.
+	{
+		float rz=(ZOOM<1.0f)?(2.0f*ZOOM):2.0f;
+		if(rz<0.01f)rz=1.0f;
+		if(timecaption!=NULL)timecaption->scale=1.0f/rz;
+		if(daycaption!=NULL)daycaption->scale=1.0f/rz;
+		if(moneycaption!=NULL)moneycaption->scale=1.0f/rz;
+	}
 
 	if(CLOCK_paused==0&&GLOBAL_text_engine_state==0)
 	{

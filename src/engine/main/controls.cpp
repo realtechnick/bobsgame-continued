@@ -57,8 +57,8 @@ bool BUTTON_START_HELD=0;
 bool BUTTON_SELECT_HELD=0;
 
 
-float MAXZOOM = 3.0f;
-float MINZOOM = 0.25f;/*PORT: was 1.0, allow zooming out*/
+float MAXZOOM = 1.25f;/*CONTINUED: was 3.0, cap at 1.25 (beyond is too zoomed)*/
+float MINZOOM = 0.5f;/*CONTINUED: was 0.25, 0.25 never rendered correctly*/
 float ZOOMINCREMENT = 0.25f;
 
 HARDWARE_TouchScreen TouchScreen;
@@ -337,9 +337,9 @@ z axis left trigger - right trigger
 							//PORT: zoom-out stops are 1.0, 0.5, 0.25 only (draw scales
 							//2.0, 1.0, 0.5 - all integer). 0.75 would be 1.5x which
 							//can never render integer-clean, so skip it.
+							//CONTINUED: stops are 1.25, 1.0, 0.5 only.
 							if(ZOOMto>1.0f)ZOOMto-=ZOOMINCREMENT;
 							else if(ZOOMto>0.5f)ZOOMto=0.5f;
-							else if(ZOOMto>MINZOOM)ZOOMto=MINZOOM;
 							if(ZOOMto<MINZOOM)ZOOMto=MINZOOM;
 						}
                         //HARDWARE_brightness--;
