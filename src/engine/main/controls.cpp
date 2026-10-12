@@ -334,12 +334,10 @@ z axis left trigger - right trigger
                     {
                         if(ZOOMlock==0)
 						{
-							//CONTINUED: zoom-out stops 1.0, 0.75, 0.5, 0.25 (draw scales
-							//2.0, 1.5, 1.0, 0.5). 0.75 = 6x6 physical px on Retina,
-							//3x3 on non-Retina -- integer-clean on both, the old PORT
-							//comment judged it at the logical level, not physical.
+							//PORT: zoom-out stops are 1.0, 0.5, 0.25 only (draw scales
+							//2.0, 1.0, 0.5 - all integer). 0.75 would be 1.5x which
+							//can never render integer-clean, so skip it.
 							if(ZOOMto>1.0f)ZOOMto-=ZOOMINCREMENT;
-							else if(ZOOMto>0.75f)ZOOMto=0.75f;
 							else if(ZOOMto>0.5f)ZOOMto=0.5f;
 							else if(ZOOMto>MINZOOM)ZOOMto=MINZOOM;
 							if(ZOOMto<MINZOOM)ZOOMto=MINZOOM;
@@ -354,9 +352,8 @@ z axis left trigger - right trigger
                     {
                         if(ZOOMlock==0)
 						{
-							//CONTINUED: match the zoom-out stops above, include 0.75.
+							//PORT: match the zoom-out stops above, skip 0.75.
 							if(ZOOMto<0.5f)ZOOMto=0.5f;
-							else if(ZOOMto<0.75f)ZOOMto=0.75f;
 							else if(ZOOMto<1.0f)ZOOMto=1.0f;
 							else if(ZOOMto<MAXZOOM)ZOOMto+=ZOOMINCREMENT;
 							if(ZOOMto>MAXZOOM)ZOOMto=MAXZOOM;

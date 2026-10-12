@@ -62,7 +62,7 @@ int SCREEN_WIDTH_TILES=960/8;//32
 int SCREEN_HEIGHT_TILES=540/8;//24
 
 //===========================================================================================================================
-void draw_texture_alpha(GLuint textureid, float x, float y, float w, float h, float tw, float th, int f, float a)
+void draw_texture_alpha(GLuint textureid, int x, int y, int w, int h, int tw, int th, int f, float a)
 {//===========================================================================================================================
 
 
@@ -76,9 +76,9 @@ void draw_texture_alpha(GLuint textureid, float x, float y, float w, float h, fl
 		//have to copy from negative y inside the texture, otherwise its flipped upside down
 		GLint param[4] = {0,0,0,0};
 		param[0]=0;//0-(tw-w);
-		param[1]=(GLint)(0-(th-h));
-		param[2]=(GLint)w;
-		param[3]=(GLint)(0-h);
+		param[1]=0-(th-h);
+		param[2]=w;
+		param[3]=0-h;
 
 		glTexParameteriv(GL_TEXTURE_2D,GL_TEXTURE_CROP_RECT_OES,param);
 
@@ -89,7 +89,7 @@ void draw_texture_alpha(GLuint textureid, float x, float y, float w, float h, fl
 
 
 		//draw it with mirrored coords
-		glDrawTexiES((GLint)x,(GLint)(240 - (y + h)),0,(GLint)w,(GLint)h);
+		glDrawTexiES(x,240 - (y + h),0,w,h);
 
 		glDisable(GL_TEXTURE_2D);
 
@@ -168,7 +168,7 @@ ERROR_check_SDL_and_GL_errors("draw_texture_alpha");
 
 }
 //===========================================================================================================================
-void draw_texture(GLuint textureid, float x, float y, float w, float h)
+void draw_texture(GLuint textureid, int x, int y, int w, int h)
 {//===========================================================================================================================
 	draw_texture_alpha(textureid,x,y,w,h,w,h,0,1);
 
@@ -220,20 +220,18 @@ ERROR_check_SDL_and_GL_errors("gl_draw_flipped");
 void draw_sprite(SPRITE* s)
 {//===========================================================================================================================
 	GLuint texid = s->texture_id;
-	float x=s->screen_x*ZOOM;
+	int x=s->screen_x*ZOOM;
 
 
 
-	float y=s->screen_y*ZOOM;
+	int y=s->screen_y*ZOOM;
 
 	//we're sending in the sprite draw_size_y, not the texture_size_y, for the texture coords
-	//floats (not ints): fractional ZOOMs like 0.75 need sub-pixel 640-space coords
-	//so the GPU lands them on whole physical pixels (6x6 on Retina).
-	float w=(s->draw_size_x*(s->scale*(1.0f+(s->gfx->hq2x*-0.5f))))*ZOOM;
-	float h=(s->draw_size_y*(s->scale*(1.0f+(s->gfx->hq2x*-0.5f))))*ZOOM;
+	int w=(s->draw_size_x*(s->scale*(1.0f+(s->gfx->hq2x*-0.5f))))*ZOOM;
+	int h=(s->draw_size_y*(s->scale*(1.0f+(s->gfx->hq2x*-0.5f))))*ZOOM;
 
-	float tw=(s->gfx->texture_size_x*(s->scale*(1.0f+(s->gfx->hq2x*-0.5f))))*ZOOM;
-	float th=(s->gfx->texture_size_y*(s->scale*(1.0f+(s->gfx->hq2x*-0.5f))))*ZOOM;
+	int tw=(s->gfx->texture_size_x*(s->scale*(1.0f+(s->gfx->hq2x*-0.5f))))*ZOOM;
+	int th=(s->gfx->texture_size_y*(s->scale*(1.0f+(s->gfx->hq2x*-0.5f))))*ZOOM;
 
 	bool f=0;
 	if((s->scale!=1.0f&&s->scale!=2.0f)||s->gfx->hq2x==1)f=1;//linear filter
