@@ -5,7 +5,7 @@
 //#include "game.h"
 
 
-int GAMESTATE= 2;//CONTINUED test: CITY as Bob (was 1=TOWN)
+int GAMESTATE= 1;//CONTINUED: TOWN (was 2=CITY Bob test)
 
 int GLOBAL_debug_level_select=78;
 
@@ -371,12 +371,7 @@ void GAME_init()
 	if(GAMESTATE==CITY)
 	{
 
-		//CONTINUED test: play as Bob in the city. Sync data_size so the
-		//animation frame math (data_size_x*data_size_y per frame) uses Bob's
-		//32x80 frames, not Yuu's 32x64.
-		PLAYER_npc->gfx=GFX_ADULT_bob;
-		PLAYER_npc->data_size_x=GFX_ADULT_bob->data_size_x;
-		PLAYER_npc->data_size_y=GFX_ADULT_bob->data_size_y;
+		PLAYER_npc->gfx=GFX_KID_yuu;
 
 		MAP_set_map_cam_to_cameraman();
 

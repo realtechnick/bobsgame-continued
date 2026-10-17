@@ -43,7 +43,7 @@ bool append_screen=0;
 
 int MAIN_QUIT=0;
 
-bool GLOBAL_hq2x_is_on=0;
+bool GLOBAL_hq2x_is_on=1;//CONTINUED: use hq2x sprites (was 0, original-res)
 
 int HARDWARE_brightness=0;
 int vsync=1;
