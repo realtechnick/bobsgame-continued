@@ -227,11 +227,13 @@ void draw_sprite(SPRITE* s)
 	int y=s->screen_y*ZOOM;
 
 	//we're sending in the sprite draw_size_y, not the texture_size_y, for the texture coords
-	int w=(s->draw_size_x*(s->scale*(1.0f+(s->gfx->hq2x*-0.5f))))*ZOOM;
-	int h=(s->draw_size_y*(s->scale*(1.0f+(s->gfx->hq2x*-0.5f))))*ZOOM;
+	//CONTINUED: removed hq2x 0.5x downscale — it squeezed hq2x sprites back to DS size
+	//in the main view (minimap never applied it, so it showed full hq2x). Draw hq2x at full size.
+	int w=(s->draw_size_x*(s->scale))*ZOOM;
+	int h=(s->draw_size_y*(s->scale))*ZOOM;
 
-	int tw=(s->gfx->texture_size_x*(s->scale*(1.0f+(s->gfx->hq2x*-0.5f))))*ZOOM;
-	int th=(s->gfx->texture_size_y*(s->scale*(1.0f+(s->gfx->hq2x*-0.5f))))*ZOOM;
+	int tw=(s->gfx->texture_size_x*(s->scale))*ZOOM;
+	int th=(s->gfx->texture_size_y*(s->scale))*ZOOM;
 
 	bool f=0;
 	if((s->scale!=1.0f&&s->scale!=2.0f)||s->gfx->hq2x==1)f=1;//linear filter
