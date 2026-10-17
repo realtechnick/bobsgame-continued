@@ -169,7 +169,7 @@ void CLOCK_vbl()
 		CAPTION* caps[3]={timecaption,daycaption,moneycaption};
 		for(int i=0;i<3;i++)if(caps[i]!=NULL)
 		{
-			caps[i]->scale=2.0f/rz;
+			caps[i]->scale=4.0f/rz;//CONTINUED 4x: was 2.0f/rz (base render zoom now 2.0, UI stays 2.0 scale)
 			for(int c=0;c<4;c++)if(caps[i]->sprite[c]!=NULL&&caps[i]->sprite[c]->texture_id!=0)
 			{
 				glBindTexture(GL_TEXTURE_2D,caps[i]->sprite[c]->texture_id);

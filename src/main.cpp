@@ -334,7 +334,7 @@ int main(int argc, char *argv[])//int argc, char **argv)
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
 
 		window = SDL_CreateWindow("\"bob's game\" alpha 1",
-								640*WINDOW_SCALE, 480*WINDOW_SCALE,
+								1280*WINDOW_SCALE, 960*WINDOW_SCALE,//CONTINUED 4x: was 640/480 (internal now 1280x960)
 								//SDL_WINDOW_FULLSCREEN |
 								SDL_WINDOW_HIGH_PIXEL_DENSITY | //CONTINUED (Nick): true Retina backing store, so overlays/minimap can hit 1x1 physical pixels
 								SDL_WINDOW_OPENGL);

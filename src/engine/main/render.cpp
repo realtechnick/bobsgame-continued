@@ -49,11 +49,11 @@ SDL_Surface* SDLSurface_screen = NULL;
 
 bool ZOOMlock=0;
 
-float ZOOM=0.5f;
-float ZOOMto=0.5f;
+float ZOOM=1.0f;//CONTINUED 4x: was 0.5 (new 1.0 = old 0.5 sizing)
+float ZOOMto=1.0f;
 
-int HARDWARE_SCREEN_WIDTH_PIXELS=640;//1920;//256
-int HARDWARE_SCREEN_HEIGHT_PIXELS=480;//1080;//192
+int HARDWARE_SCREEN_WIDTH_PIXELS=1280;//CONTINUED 4x: was 640 (2x world scale -> 4x to match hq2x sprites)
+int HARDWARE_SCREEN_HEIGHT_PIXELS=960;//CONTINUED 4x: was 480
 
 int GAME_VIEWPORT_WIDTH_PIXELS=960;//256
 int GAME_VIEWPORT_HEIGHT_PIXELS=540;//192
@@ -456,7 +456,8 @@ void render()
 	//PORT: at 0.25 the camera view (1280x960) matches the window: render directly
 	//at 1:1 for pixel-perfect sharpness instead of minifying into the 640x480
 	//FBO and upscaling (which throws away 3/4 of the pixels).
-	bool direct_1to1=(tempZOOM<0.5f&&
+	//CONTINUED 4x: threshold 0.5->1.0 (new min is 1.0; below-min never occurs, dead code kept for clarity).
+	bool direct_1to1=(tempZOOM<1.0f&&
 		GAME_VIEWPORT_WIDTH_PIXELS==WINDOW_DRAWABLE_W&&
 		GAME_VIEWPORT_HEIGHT_PIXELS==WINDOW_DRAWABLE_H);
 
@@ -493,8 +494,10 @@ void render()
 	//PORT: when zoomed out (ZOOM<1) the camera view is wider than 320x240, so draw
 	//at 2x*ZOOM to fill the viewport 1:1 instead of overflowing it. At ZOOM>=1
 	//this is exactly 2.0 as before.
-	if(tempZOOM<1.0f)ZOOM=2.0f*tempZOOM;
-	else ZOOM=2.0f;
+	//CONTINUED 4x: thresholds doubled — new ZOOM 1.0/2.0/2.5 = old 0.5/1.0/1.25 sizing.
+	//Render zoom is 2x*tempZOOM below 2.0, capped at 4.0 above.
+	if(tempZOOM<2.0f)ZOOM=2.0f*tempZOOM;
+	else ZOOM=4.0f;
 	}
 
 	//confusingly, the game scales everything by 2x at ZOOM 1x. the internal game engine thinks it is running at half the rendered resolution.
@@ -585,11 +588,12 @@ void render()
 		//bind screen texture to 2d
 		glBindTexture(GL_TEXTURE_2D, screen);
 
-		if(tempZOOM<1.0f)
+		if(tempZOOM<2.0f)
 		{
 			//PORT: zoomed out: the draw phase rendered the expanded camera view
 			//across the whole 640x480 viewport, so copy it whole and blit it
 			//full-screen. (The POT-sized copy below only works for ZOOM>=1.)
+			//CONTINUED 4x: threshold 1.0->2.0.
 			glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 0, 0,HARDWARE_SCREEN_WIDTH_PIXELS,HARDWARE_SCREEN_HEIGHT_PIXELS, 0);
 			//clear back buffer
 			glClear( GL_COLOR_BUFFER_BIT );
