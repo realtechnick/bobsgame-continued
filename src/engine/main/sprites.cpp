@@ -11,7 +11,7 @@
 
 
 unsigned short* GAME_original_SPRITE_PALETTE = NULL; //pointer to globalspritepalette.bin
-int* GAME_hq2x_SPRITE_PALETTE = NULL; //pointer to hq2xpalette.bin
+unsigned short* GAME_hq2x_SPRITE_PALETTE = NULL; //pointer to hq2xpalette.bin (CONTINUED: was int*, file is 256x uint16)
 
 unsigned short GAME_temp_SPRITE_PALETTE[256] = {0};//holds brightened sprite palette
 
@@ -1080,7 +1080,7 @@ void HARDWARE_init_gfx_data()
 	//-----------------------------
 
 		GAME_original_SPRITE_PALETTE	= (unsigned short*)	HARDWARE_load_file("/sprite/globalspritepalette_SpritePalette.bin");
-		GAME_hq2x_SPRITE_PALETTE	= (int*)	HARDWARE_load_file("/sprite/hq2xpalette_SpritePalette.bin");
+		GAME_hq2x_SPRITE_PALETTE	= (unsigned short*)	HARDWARE_load_file("/sprite/hq2xpalette_SpritePalette.bin");
 
 
 		//-----------------------------
